@@ -371,7 +371,7 @@
                     </div>
                     
                     <div class="spread-actions">
-                        <button @click="$emit('start-reading', selectedCards)" class="btn btn-primary">
+                        <button @click="startReading" class="btn btn-primary">
                             🔮 리딩 시작
                         </button>
                         <button @click="$emit('reshuffle')" class="btn btn-secondary">
@@ -392,6 +392,10 @@
                         return '정방향';
                     }
                     return this.selectedCards[index].reversed ? '역방향' : '정방향';
+                },
+                startReading() {
+                    console.log('CardSpread에서 리딩 시작:', this.selectedCards);
+                    this.$emit('start-reading', this.selectedCards);
                 }
             }
         };
@@ -606,8 +610,17 @@
                         console.log('리딩 시작 - 선택된 카드들:', cards);
                         console.log('선택된 목적:', this.selectedPurpose);
                         
+                        // cards가 undefined인 경우 this.selectedCards 사용
+                        const selectedCards = cards || this.selectedCards;
+                        
+                        if (!selectedCards || !Array.isArray(selectedCards) || selectedCards.length === 0) {
+                            throw new Error('선택된 카드가 없습니다.');
+                        }
+                        
+                        console.log('사용할 카드들:', selectedCards);
+                        
                         // 선택된 카드들의 실제 의미를 분석
-                        const cardMeanings = cards.map((card, index) => {
+                        const cardMeanings = selectedCards.map((card, index) => {
                             console.log(`카드 ${index + 1}:`, card);
                             
                             const meaning = {
