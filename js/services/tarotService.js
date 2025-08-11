@@ -346,6 +346,30 @@ class TarotService {
             )
             .subscribe();
     }
+
+    // 사용자 리딩 삭제
+    async deleteUserReading(readingId) {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            
+            if (!user) {
+                console.warn('사용자가 로그인되지 않았습니다.');
+                return false;
+            }
+
+            const { error } = await supabase
+                .from('user_readings')
+                .delete()
+                .eq('id', readingId)
+                .eq('user_id', user.id);
+            
+            if (error) throw error;
+            return true;
+        } catch (error) {
+            console.error('사용자 리딩 삭제 실패:', error);
+            throw error;
+        }
+    }
 }
 
 // TarotService 인스턴스 생성
