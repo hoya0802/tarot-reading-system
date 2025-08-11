@@ -254,7 +254,7 @@ export function generateCardPlaceholder(cardName, suit = null, number = null, is
  * @param {object} card - 카드 객체
  * @returns {string} 카드 이미지 HTML
  */
-export function getCardDefaultImage(card) {
+function getCardDefaultImage(card) {
     const theme = getCardColorTheme(card.name, card.suit);
     const displayName = card.name || 'Unknown Card';
     const displaySuit = card.suit ? ` of ${card.suit}` : '';
