@@ -335,7 +335,7 @@
             }
         };
 
-                const CardSpread = {
+        const CardSpread = {
             props: ['selectedCards'],
             mounted() {
                 console.log('CardSpread 컴포넌트 마운트됨');
@@ -394,16 +394,28 @@
             `,
             methods: {
                 getCardName(index) {
+                    console.log(`getCardName(${index}) 호출됨`);
+                    console.log('this.selectedCards:', this.selectedCards);
+                    
                     if (!this.selectedCards || !Array.isArray(this.selectedCards) || !this.selectedCards[index]) {
+                        console.log(`카드 ${index} 없음`);
                         return '카드 없음';
                     }
-                    return this.selectedCards[index].name || '카드 없음';
+                    
+                    const cardName = this.selectedCards[index].name || '카드 없음';
+                    console.log(`카드 ${index} 이름:`, cardName);
+                    return cardName;
                 },
                 getCardDirection(index) {
+                    console.log(`getCardDirection(${index}) 호출됨`);
+                    
                     if (!this.selectedCards || !Array.isArray(this.selectedCards) || !this.selectedCards[index]) {
                         return '정방향';
                     }
-                    return this.selectedCards[index].reversed ? '역방향' : '정방향';
+                    
+                    const direction = this.selectedCards[index].reversed ? '역방향' : '정방향';
+                    console.log(`카드 ${index} 방향:`, direction);
+                    return direction;
                 },
                 startReading() {
                     console.log('CardSpread에서 리딩 시작 호출됨');
@@ -622,16 +634,20 @@
                 },
                 
                 onCardSelectionComplete(cards) {
-                    console.log('onCardSelectionComplete 호출됨');
+                    console.log('=== onCardSelectionComplete 호출됨 ===');
                     console.log('전달받은 cards:', cards);
                     console.log('cards 타입:', typeof cards);
                     console.log('cards 길이:', cards ? cards.length : 'undefined');
+                    console.log('cards 내용:', JSON.stringify(cards, null, 2));
                     
                     this.selectedCards = cards;
                     console.log('this.selectedCards 설정됨:', this.selectedCards);
+                    console.log('this.selectedCards 타입:', typeof this.selectedCards);
+                    console.log('this.selectedCards 길이:', this.selectedCards ? this.selectedCards.length : 'undefined');
                     
                     this.currentStep = 'spread';
                     console.log('currentStep을 spread로 변경');
+                    console.log('=== onCardSelectionComplete 완료 ===');
                 },
                 
                 async onStartReading(cards) {
