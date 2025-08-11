@@ -344,29 +344,29 @@
                     
                     <div class="spread-container">
                         <div class="spread-layout">
-                            <div class="card-position past">
-                                <h4>과거</h4>
-                                <div class="card-display">
-                                    <div class="card-name">{{ selectedCards[0]?.name || '카드 없음' }}</div>
-                                    <div class="card-direction">{{ selectedCards[0]?.reversed ? '역방향' : '정방향' }}</div>
-                                </div>
-                            </div>
-                            
-                            <div class="card-position present">
-                                <h4>현재</h4>
-                                <div class="card-display">
-                                    <div class="card-name">{{ selectedCards[1]?.name || '카드 없음' }}</div>
-                                    <div class="card-direction">{{ selectedCards[1]?.reversed ? '역방향' : '정방향' }}</div>
-                                </div>
-                            </div>
-                            
-                            <div class="card-position future">
-                                <h4>미래</h4>
-                                <div class="card-display">
-                                    <div class="card-name">{{ selectedCards[2]?.name || '카드 없음' }}</div>
-                                    <div class="card-direction">{{ selectedCards[2]?.reversed ? '역방향' : '정방향' }}</div>
-                                </div>
-                            </div>
+                                                         <div class="card-position past">
+                                 <h4>과거</h4>
+                                 <div class="card-display">
+                                     <div class="card-name">{{ getCardName(0) }}</div>
+                                     <div class="card-direction">{{ getCardDirection(0) }}</div>
+                                 </div>
+                             </div>
+                             
+                             <div class="card-position present">
+                                 <h4>현재</h4>
+                                 <div class="card-display">
+                                     <div class="card-name">{{ getCardName(1) }}</div>
+                                     <div class="card-direction">{{ getCardDirection(1) }}</div>
+                                 </div>
+                             </div>
+                             
+                             <div class="card-position future">
+                                 <h4>미래</h4>
+                                 <div class="card-display">
+                                     <div class="card-name">{{ getCardName(2) }}</div>
+                                     <div class="card-direction">{{ getCardDirection(2) }}</div>
+                                 </div>
+                             </div>
                         </div>
                     </div>
                     
@@ -379,7 +379,21 @@
                         </button>
                     </div>
                 </div>
-            `
+            `,
+            methods: {
+                getCardName(index) {
+                    if (!this.selectedCards || !Array.isArray(this.selectedCards) || !this.selectedCards[index]) {
+                        return '카드 없음';
+                    }
+                    return this.selectedCards[index].name || '카드 없음';
+                },
+                getCardDirection(index) {
+                    if (!this.selectedCards || !Array.isArray(this.selectedCards) || !this.selectedCards[index]) {
+                        return '정방향';
+                    }
+                    return this.selectedCards[index].reversed ? '역방향' : '정방향';
+                }
+            }
         };
 
         const ReadingResult = {
@@ -398,11 +412,12 @@
                         <div class="cards-summary">
                             <h3>🎴 선택된 카드</h3>
                             <div class="selected-cards-summary">
-                                <div v-for="(card, index) in readingData.cards" :key="card.id" class="card-summary">
+                                <div v-for="(card, index) in getSafeCards()" :key="card.id" class="card-summary">
                                     <div class="position">{{ getPositionName(index) }}</div>
                                     <div class="card-info">
-                                        <div class="card-name">{{ card.name }}</div>
+                                        <div class="card-name">{{ card.name || '카드 없음' }}</div>
                                         <div class="card-direction">{{ card.reversed ? '역방향' : '정방향' }}</div>
+                                        <div class="card-meaning">{{ getCardMeaning(card, index) }}</div>
                                     </div>
                                 </div>
                             </div>
@@ -444,6 +459,27 @@
                 getPositionName(index) {
                     const positions = ['과거', '현재', '미래'];
                     return positions[index] || '';
+                },
+                getSafeCards() {
+                    if (!this.readingData || !this.readingData.cards || !Array.isArray(this.readingData.cards)) {
+                        return [];
+                    }
+                    return this.readingData.cards;
+                },
+                getCardMeaning(card, index) {
+                    if (!this.readingData || !this.readingData.cardMeanings || !this.readingData.cardMeanings[index]) {
+                        return '의미를 불러올 수 없습니다.';
+                    }
+                    
+                    const meaning = this.readingData.cardMeanings[index];
+                    if (!meaning.meaning) {
+                        return '의미 정보가 없습니다.';
+                    }
+                    
+                    // 의미 텍스트를 짧게 자르기
+                    return meaning.meaning.length > 100 ? 
+                           meaning.meaning.substring(0, 100) + '...' : 
+                           meaning.meaning;
                 }
             }
         };
@@ -567,13 +603,27 @@
                     try {
                         this.isLoading = true;
                         
+                        // 선택된 카드들의 실제 의미를 분석
+                        const cardMeanings = cards.map(card => ({
+                            name: card.name,
+                            position: card.position || '과거',
+                            meaning: card.reversed ? card.reversed_meaning : card.upright_meaning,
+                            keywords: card.keywords,
+                            isReversed: card.reversed
+                        }));
+                        
+                        // 전체적인 해석 생성
+                        const overallMeaning = this.generateOverallMeaning(cardMeanings, this.selectedPurpose);
+                        const advice = this.generateAdvice(cardMeanings, this.selectedPurpose);
+                        
                         // 리딩 결과 생성
                         this.readingData = {
                             cards: cards,
                             purpose: this.selectedPurpose,
+                            cardMeanings: cardMeanings,
                             combination: {
-                                overall_meaning: '선택된 카드들의 조합을 통해 현재 상황을 분석한 결과, 균형 잡힌 발전의 시기입니다.',
-                                advice: '현재의 선택과 행동이 미래에 큰 영향을 미칠 것입니다. 신중하게 판단하시기 바랍니다.'
+                                overall_meaning: overallMeaning,
+                                advice: advice
                             },
                             timestamp: new Date()
                         };
@@ -622,6 +672,40 @@
                     const status = this.isLoading ? '로딩 중' : 
                                  this.showSetupGuide ? '설정 필요' : '연결됨';
                     alert(`현재 상태: ${status}`);
+                },
+                
+                generateOverallMeaning(cardMeanings, purpose) {
+                    const purposeNames = {
+                        'love': '사랑과 관계',
+                        'career': '직장과 업무',
+                        'daily': '오늘의 운세',
+                        'health': '건강과 웰빙',
+                        'money': '재정과 돈'
+                    };
+                    
+                    const purposeName = purposeNames[purpose] || '일반적인';
+                    
+                    // 카드들의 키워드를 분석
+                    const keywords = cardMeanings.map(card => card.keywords).filter(k => k).join(', ');
+                    
+                    return `${purposeName} 측면에서 ${cardMeanings[0]?.name}, ${cardMeanings[1]?.name}, ${cardMeanings[2]?.name}의 조합은 ${keywords}의 에너지를 나타냅니다. 과거의 경험이 현재의 선택에 영향을 미치고, 미래의 방향성을 제시하고 있습니다.`;
+                },
+                
+                generateAdvice(cardMeanings, purpose) {
+                    const reversedCards = cardMeanings.filter(card => card.isReversed);
+                    const uprightCards = cardMeanings.filter(card => !card.isReversed);
+                    
+                    let advice = '';
+                    
+                    if (reversedCards.length > 1) {
+                        advice = '역방향 카드가 많아 현재 어려운 시기를 겪고 있을 수 있습니다. 인내심을 가지고 상황을 관찰하세요.';
+                    } else if (uprightCards.length > 1) {
+                        advice = '정방향 카드가 많아 긍정적인 에너지가 흐르고 있습니다. 자신의 직감을 믿고 행동하세요.';
+                    } else {
+                        advice = '균형 잡힌 카드 배치입니다. 현재 상황을 객관적으로 분석하고 신중하게 판단하세요.';
+                    }
+                    
+                    return advice;
                 }
             }
         });
