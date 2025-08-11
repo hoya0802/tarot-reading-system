@@ -342,30 +342,41 @@
                     localSelectedCards: []
                 };
             },
-            watch: {
-                selectedCards: {
-                    immediate: true,
-                    deep: true,
-                    handler(newCards) {
-                        console.log('CardSpread selectedCards 변경됨:', newCards);
-                        if (newCards && Array.isArray(newCards) && newCards.length > 0) {
-                            this.localSelectedCards = [...newCards];
-                            console.log('localSelectedCards 설정됨:', this.localSelectedCards);
-                        } else {
-                            this.localSelectedCards = [];
-                            console.log('localSelectedCards 빈 배열로 설정됨');
-                        }
-                    }
-                }
-            },
-            mounted() {
-                console.log('CardSpread 컴포넌트 마운트됨');
-                console.log('selectedCards props:', this.selectedCards);
-                if (this.selectedCards && Array.isArray(this.selectedCards) && this.selectedCards.length > 0) {
-                    this.localSelectedCards = [...this.selectedCards];
-                    console.log('mounted에서 localSelectedCards 설정됨:', this.localSelectedCards);
-                }
-            },
+                         watch: {
+                 selectedCards: {
+                     immediate: true,
+                     deep: true,
+                     handler(newCards, oldCards) {
+                         console.log('CardSpread selectedCards 변경됨:', newCards);
+                         console.log('이전 selectedCards:', oldCards);
+                         
+                         // newCards가 유효한 배열이고 길이가 0보다 큰 경우에만 설정
+                         if (newCards && Array.isArray(newCards) && newCards.length > 0) {
+                             this.localSelectedCards = [...newCards];
+                             console.log('localSelectedCards 설정됨:', this.localSelectedCards);
+                         } else if (newCards === undefined || newCards === null) {
+                             // undefined나 null인 경우 기존 데이터 유지
+                             console.log('selectedCards가 undefined/null이므로 기존 데이터 유지');
+                         } else {
+                             // 빈 배열인 경우에만 빈 배열로 설정
+                             this.localSelectedCards = [];
+                             console.log('localSelectedCards 빈 배열로 설정됨');
+                         }
+                     }
+                 }
+             },
+                         mounted() {
+                 console.log('CardSpread 컴포넌트 마운트됨');
+                 console.log('selectedCards props:', this.selectedCards);
+                 
+                 // mounted에서도 selectedCards가 있으면 설정
+                 if (this.selectedCards && Array.isArray(this.selectedCards) && this.selectedCards.length > 0) {
+                     this.localSelectedCards = [...this.selectedCards];
+                     console.log('mounted에서 localSelectedCards 설정됨:', this.localSelectedCards);
+                 } else {
+                     console.log('mounted에서 selectedCards가 없음, watch에서 처리 대기');
+                 }
+             },
             template: `
                 <div class="section card-spread">
                     <h2>🎴 선택된 카드 스프레드</h2>
