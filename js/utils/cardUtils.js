@@ -118,7 +118,7 @@ function findSuitGroup(suit) {
  * @param {number} number - 카드 번호
  * @returns {string} 이미지 URL
  */
-export function getCardImageUrl(cardName, suit = null, number = null) {
+function getCardImageUrl(cardName, suit = null, number = null) {
     // 실제 이미지가 있는 경우 우선 사용
     if (cardName && cardName.trim()) {
         // 메이저 아르카나의 경우
@@ -141,7 +141,7 @@ export function getCardImageUrl(cardName, suit = null, number = null) {
  * @param {string} suit - 카드 무늬
  * @returns {object} 색상 정보
  */
-export function getCardColorTheme(cardName, suit = null) {
+function getCardColorTheme(cardName, suit = null) {
     const themes = {
         // 메이저 아르카나 테마
         'The Fool': { bg: '#f39c12', text: '#ffffff' },
@@ -196,7 +196,7 @@ export function getCardColorTheme(cardName, suit = null) {
  * @param {boolean} isReversed - 역방 여부
  * @returns {string} HTML 문자열
  */
-export function generateCardPlaceholder(cardName, suit = null, number = null, isReversed = false) {
+function generateCardPlaceholder(cardName, suit = null, number = null, isReversed = false) {
     const theme = getCardColorTheme(cardName, suit);
     const displayName = cardName || 'Unknown Card';
     const displaySuit = suit ? ` of ${suit}` : '';
