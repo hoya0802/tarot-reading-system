@@ -105,13 +105,13 @@
                     @selection-complete="onCardSelectionComplete">
                 </tarot-deck>
 
-                <!-- 카드 스프레드 -->
-                <card-spread 
-                    v-if="currentStep === 'spread'"
-                    :selectedCards="selectedCards"
-                    @start-reading="onStartReading"
-                    @reshuffle="onReshuffle">
-                </card-spread>
+                                 <!-- 카드 스프레드 -->
+                 <card-spread 
+                     v-if="currentStep === 'spread' && selectedCards && selectedCards.length > 0"
+                     :selectedCards="selectedCards"
+                     @start-reading="onStartReading"
+                     @reshuffle="onReshuffle">
+                 </card-spread>
 
                 <!-- 리딩 결과 -->
                 <reading-result 
@@ -686,18 +686,15 @@
                      console.log('cards 길이:', cards ? cards.length : 'undefined');
                      console.log('cards 내용:', JSON.stringify(cards, null, 2));
                      
-                     // 1. 먼저 데이터 설정
+                     // 데이터 설정과 단계 변경을 동시에 실행
                      this.selectedCards = cards;
+                     this.currentStep = 'spread';
+                     
                      console.log('this.selectedCards 설정됨:', this.selectedCards);
                      console.log('this.selectedCards 타입:', typeof this.selectedCards);
                      console.log('this.selectedCards 길이:', this.selectedCards ? this.selectedCards.length : 'undefined');
-                     
-                     // 2. 다음 tick에서 컴포넌트 마운트 (Vue의 반응형 시스템이 업데이트될 시간을 줌)
-                     this.$nextTick(() => {
-                         this.currentStep = 'spread';
-                         console.log('currentStep을 spread로 변경 (nextTick 후)');
-                         console.log('=== onCardSelectionComplete 완료 ===');
-                     });
+                     console.log('currentStep을 spread로 변경');
+                     console.log('=== onCardSelectionComplete 완료 ===');
                  },
                 
                 async onStartReading(cards) {
