@@ -345,16 +345,26 @@
             watch: {
                 selectedCards: {
                     immediate: true,
+                    deep: true,
                     handler(newCards) {
                         console.log('CardSpread selectedCards 변경됨:', newCards);
-                        this.localSelectedCards = newCards || [];
+                        if (newCards && Array.isArray(newCards) && newCards.length > 0) {
+                            this.localSelectedCards = [...newCards];
+                            console.log('localSelectedCards 설정됨:', this.localSelectedCards);
+                        } else {
+                            this.localSelectedCards = [];
+                            console.log('localSelectedCards 빈 배열로 설정됨');
+                        }
                     }
                 }
             },
             mounted() {
                 console.log('CardSpread 컴포넌트 마운트됨');
                 console.log('selectedCards props:', this.selectedCards);
-                this.localSelectedCards = this.selectedCards || [];
+                if (this.selectedCards && Array.isArray(this.selectedCards) && this.selectedCards.length > 0) {
+                    this.localSelectedCards = [...this.selectedCards];
+                    console.log('mounted에서 localSelectedCards 설정됨:', this.localSelectedCards);
+                }
             },
             template: `
                 <div class="section card-spread">
@@ -364,6 +374,8 @@
                                          <!-- 디버깅 정보 -->
                      <div style="background: #f0f0f0; padding: 10px; margin: 10px; border: 1px solid #ccc; font-family: monospace; font-size: 12px;">
                          <p><strong>디버깅 정보:</strong></p>
+                         <p>selectedCards props 타입: {{ typeof selectedCards }}</p>
+                         <p>selectedCards props 길이: {{ selectedCards ? selectedCards.length : 'undefined' }}</p>
                          <p>localSelectedCards 타입: {{ typeof localSelectedCards }}</p>
                          <p>localSelectedCards 길이: {{ localSelectedCards ? localSelectedCards.length : 'undefined' }}</p>
                          <p>localSelectedCards 내용: {{ JSON.stringify(localSelectedCards, null, 2) }}</p>
@@ -411,9 +423,15 @@
                  getCardName(index) {
                      console.log(`getCardName(${index}) 호출됨`);
                      console.log('this.localSelectedCards:', this.localSelectedCards);
+                     console.log('this.localSelectedCards 길이:', this.localSelectedCards ? this.localSelectedCards.length : 'undefined');
                      
-                     if (!this.localSelectedCards || !Array.isArray(this.localSelectedCards) || !this.localSelectedCards[index]) {
-                         console.log(`카드 ${index} 없음`);
+                     if (!this.localSelectedCards || !Array.isArray(this.localSelectedCards) || this.localSelectedCards.length === 0) {
+                         console.log(`카드 ${index} 없음 - localSelectedCards가 비어있음`);
+                         return '카드 없음';
+                     }
+                     
+                     if (!this.localSelectedCards[index]) {
+                         console.log(`카드 ${index} 없음 - 해당 인덱스에 카드가 없음`);
                          return '카드 없음';
                      }
                      
@@ -424,7 +442,13 @@
                  getCardDirection(index) {
                      console.log(`getCardDirection(${index}) 호출됨`);
                      
-                     if (!this.localSelectedCards || !Array.isArray(this.localSelectedCards) || !this.localSelectedCards[index]) {
+                     if (!this.localSelectedCards || !Array.isArray(this.localSelectedCards) || this.localSelectedCards.length === 0) {
+                         console.log(`카드 ${index} 방향 없음 - localSelectedCards가 비어있음`);
+                         return '정방향';
+                     }
+                     
+                     if (!this.localSelectedCards[index]) {
+                         console.log(`카드 ${index} 방향 없음 - 해당 인덱스에 카드가 없음`);
                          return '정방향';
                      }
                      
@@ -440,6 +464,7 @@
                      
                      if (!this.localSelectedCards || !Array.isArray(this.localSelectedCards) || this.localSelectedCards.length === 0) {
                          console.error('CardSpread: 선택된 카드가 없습니다!');
+                         console.error('localSelectedCards 상태:', this.localSelectedCards);
                          alert('선택된 카드가 없습니다. 카드를 다시 선택해주세요.');
                          return;
                      }
