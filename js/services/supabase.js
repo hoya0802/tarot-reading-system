@@ -22,7 +22,7 @@ if (SUPABASE_URL === 'YOUR_SUPABASE_PROJECT_URL' || SUPABASE_ANON_KEY === 'YOUR_
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // 설정 확인 함수
-export function checkSupabaseConnection() {
+function checkSupabaseConnection() {
     return new Promise(async (resolve, reject) => {
         try {
             console.log('Supabase 연결 테스트 시작...');
@@ -66,7 +66,7 @@ export function checkSupabaseConnection() {
 }
 
 // 설정 가이드 출력
-export function showSetupGuide() {
+function showSetupGuide() {
     console.log(`
 === Supabase 설정 가이드 ===
 1. Supabase 프로젝트 대시보드에서 Settings > API로 이동
