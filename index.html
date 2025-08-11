@@ -136,22 +136,53 @@
         </div>
     </div>
 
-    <!-- JavaScript 파일들 -->
-    <script type="module" src="js/services/supabase.js"></script>
-    <script type="module" src="js/utils/cardUtils.js"></script>
-    <script type="module" src="js/services/tarotService.js"></script>
-    <script type="module" src="js/components/PurposeSelector.js"></script>
-    <script type="module" src="js/components/TarotDeck.js"></script>
-    <script type="module" src="js/components/CardSpread.js"></script>
-    <script type="module" src="js/components/ReadingResult.js"></script>
-    <script type="module" src="js/components/UserHistory.js"></script>
-    
     <!-- 메인 애플리케이션 스크립트 -->
     <script type="module">
         import supabase, { checkSupabaseConnection, showSetupGuide, simpleConnectionTest } from './js/services/supabase.js';
         import { loadCards, tarotService } from './js/services/tarotService.js';
 
         const { createApp } = Vue;
+
+        // Vue 컴포넌트들 정의
+        const PurposeSelector = {
+            props: ['selectedPurpose'],
+            data() {
+                return {
+                    purposes: [
+                        { code: 'love', name: '연애/사랑', icon: '💕', color: '#ff6b6b', description: '사랑과 관계에 관한 해석' },
+                        { code: 'career', name: '직장/일', icon: '💼', color: '#4ecdc4', description: '직장과 업무에 관한 해석' },
+                        { code: 'daily', name: '오늘의 운세', icon: '☀️', color: '#45b7d1', description: '오늘 하루의 전반적인 운세' },
+                        { code: 'health', name: '건강', icon: '🌿', color: '#96ceb4', description: '건강과 웰빙에 관한 해석' },
+                        { code: 'money', name: '금전', icon: '💰', color: '#feca57', description: '재정과 돈에 관한 해석' }
+                    ]
+                };
+            },
+            template: `
+                <div class="section purpose-selector">
+                    <h2>🔮 리딩 목적을 선택하세요</h2>
+                    <p class="text-center mb-3">어떤 분야에 대해 궁금한가요?</p>
+                    
+                    <div class="purpose-grid">
+                        <div 
+                            v-for="purpose in purposes" 
+                            :key="purpose.code"
+                            class="purpose-item"
+                            :class="{ 'selected': selectedPurpose === purpose.code }"
+                            :style="{ borderColor: purpose.color }"
+                            @click="$emit('purpose-selected', purpose.code)">
+                            
+                            <div class="purpose-icon">{{ purpose.icon }}</div>
+                            <div class="purpose-name">{{ purpose.name }}</div>
+                            <div class="purpose-description">{{ purpose.description }}</div>
+                            
+                            <div v-if="selectedPurpose === purpose.code" class="selected-indicator">
+                                ✓ 선택됨
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `
+        };
 
         // 기본 테스트 함수들
         function updateCurrentTime() {
@@ -202,7 +233,7 @@
             setInterval(updateCurrentTime, 1000);
         });
 
-        createApp({
+        const app = createApp({
             data() {
                 return {
                     isLoading: true,
@@ -294,7 +325,13 @@
                     alert(`현재 상태: ${status}`);
                 }
             }
-        }).mount('#app');
+        });
+
+        // 컴포넌트 등록
+        app.component('purpose-selector', PurposeSelector);
+
+        // 앱 마운트
+        app.mount('#app');
     </script>
 </body>
 </html>
