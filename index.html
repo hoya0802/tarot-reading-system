@@ -337,22 +337,37 @@
 
         const CardSpread = {
             props: ['selectedCards'],
+            data() {
+                return {
+                    localSelectedCards: []
+                };
+            },
+            watch: {
+                selectedCards: {
+                    immediate: true,
+                    handler(newCards) {
+                        console.log('CardSpread selectedCards 변경됨:', newCards);
+                        this.localSelectedCards = newCards || [];
+                    }
+                }
+            },
             mounted() {
                 console.log('CardSpread 컴포넌트 마운트됨');
                 console.log('selectedCards props:', this.selectedCards);
+                this.localSelectedCards = this.selectedCards || [];
             },
             template: `
                 <div class="section card-spread">
                     <h2>🎴 선택된 카드 스프레드</h2>
                     <p class="text-center mb-3">선택된 3장의 카드를 확인하고 리딩을 시작하세요</p>
                     
-                    <!-- 디버깅 정보 -->
-                    <div style="background: #f0f0f0; padding: 10px; margin: 10px; border: 1px solid #ccc; font-family: monospace; font-size: 12px;">
-                        <p><strong>디버깅 정보:</strong></p>
-                        <p>selectedCards 타입: {{ typeof selectedCards }}</p>
-                        <p>selectedCards 길이: {{ selectedCards ? selectedCards.length : 'undefined' }}</p>
-                        <p>selectedCards 내용: {{ JSON.stringify(selectedCards, null, 2) }}</p>
-                    </div>
+                                         <!-- 디버깅 정보 -->
+                     <div style="background: #f0f0f0; padding: 10px; margin: 10px; border: 1px solid #ccc; font-family: monospace; font-size: 12px;">
+                         <p><strong>디버깅 정보:</strong></p>
+                         <p>localSelectedCards 타입: {{ typeof localSelectedCards }}</p>
+                         <p>localSelectedCards 길이: {{ localSelectedCards ? localSelectedCards.length : 'undefined' }}</p>
+                         <p>localSelectedCards 내용: {{ JSON.stringify(localSelectedCards, null, 2) }}</p>
+                     </div>
                     
                     <div class="spread-container">
                         <div class="spread-layout">
@@ -392,47 +407,47 @@
                     </div>
                 </div>
             `,
-            methods: {
-                getCardName(index) {
-                    console.log(`getCardName(${index}) 호출됨`);
-                    console.log('this.selectedCards:', this.selectedCards);
-                    
-                    if (!this.selectedCards || !Array.isArray(this.selectedCards) || !this.selectedCards[index]) {
-                        console.log(`카드 ${index} 없음`);
-                        return '카드 없음';
-                    }
-                    
-                    const cardName = this.selectedCards[index].name || '카드 없음';
-                    console.log(`카드 ${index} 이름:`, cardName);
-                    return cardName;
-                },
-                getCardDirection(index) {
-                    console.log(`getCardDirection(${index}) 호출됨`);
-                    
-                    if (!this.selectedCards || !Array.isArray(this.selectedCards) || !this.selectedCards[index]) {
-                        return '정방향';
-                    }
-                    
-                    const direction = this.selectedCards[index].reversed ? '역방향' : '정방향';
-                    console.log(`카드 ${index} 방향:`, direction);
-                    return direction;
-                },
-                startReading() {
-                    console.log('CardSpread에서 리딩 시작 호출됨');
-                    console.log('this.selectedCards:', this.selectedCards);
-                    console.log('this.selectedCards 타입:', typeof this.selectedCards);
-                    console.log('this.selectedCards 길이:', this.selectedCards ? this.selectedCards.length : 'undefined');
-                    
-                    if (!this.selectedCards || !Array.isArray(this.selectedCards) || this.selectedCards.length === 0) {
-                        console.error('CardSpread: 선택된 카드가 없습니다!');
-                        alert('선택된 카드가 없습니다. 카드를 다시 선택해주세요.');
-                        return;
-                    }
-                    
-                    console.log('CardSpread에서 이벤트 발생:', this.selectedCards);
-                    this.$emit('start-reading', this.selectedCards);
-                }
-            }
+                         methods: {
+                 getCardName(index) {
+                     console.log(`getCardName(${index}) 호출됨`);
+                     console.log('this.localSelectedCards:', this.localSelectedCards);
+                     
+                     if (!this.localSelectedCards || !Array.isArray(this.localSelectedCards) || !this.localSelectedCards[index]) {
+                         console.log(`카드 ${index} 없음`);
+                         return '카드 없음';
+                     }
+                     
+                     const cardName = this.localSelectedCards[index].name || '카드 없음';
+                     console.log(`카드 ${index} 이름:`, cardName);
+                     return cardName;
+                 },
+                 getCardDirection(index) {
+                     console.log(`getCardDirection(${index}) 호출됨`);
+                     
+                     if (!this.localSelectedCards || !Array.isArray(this.localSelectedCards) || !this.localSelectedCards[index]) {
+                         return '정방향';
+                     }
+                     
+                     const direction = this.localSelectedCards[index].reversed ? '역방향' : '정방향';
+                     console.log(`카드 ${index} 방향:`, direction);
+                     return direction;
+                 },
+                 startReading() {
+                     console.log('CardSpread에서 리딩 시작 호출됨');
+                     console.log('this.localSelectedCards:', this.localSelectedCards);
+                     console.log('this.localSelectedCards 타입:', typeof this.localSelectedCards);
+                     console.log('this.localSelectedCards 길이:', this.localSelectedCards ? this.localSelectedCards.length : 'undefined');
+                     
+                     if (!this.localSelectedCards || !Array.isArray(this.localSelectedCards) || this.localSelectedCards.length === 0) {
+                         console.error('CardSpread: 선택된 카드가 없습니다!');
+                         alert('선택된 카드가 없습니다. 카드를 다시 선택해주세요.');
+                         return;
+                     }
+                     
+                     console.log('CardSpread에서 이벤트 발생:', this.localSelectedCards);
+                     this.$emit('start-reading', this.localSelectedCards);
+                 }
+             }
         };
 
         const ReadingResult = {
