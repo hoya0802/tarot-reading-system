@@ -10,15 +10,47 @@
     <link rel="stylesheet" href="css/tarot.css">
     
     <!-- Vue.js -->
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    
-    <!-- Supabase -->
-    <script src="https://cdn.skypack.dev/@supabase/supabase-js"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
     
     <!-- Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔮</text></svg>">
+    
+    <!-- 디버깅용 스타일 -->
+    <style>
+        .debug-info {
+            background: #f0f0f0;
+            padding: 10px;
+            margin: 10px;
+            border: 1px solid #ccc;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 10px;
+            margin: 10px;
+            border: 1px solid #ef5350;
+        }
+        .success {
+            background: #e8f5e8;
+            color: #2e7d32;
+            padding: 10px;
+            margin: 10px;
+            border: 1px solid #66bb6a;
+        }
+    </style>
 </head>
 <body>
+    <!-- 기본 테스트 메시지 -->
+    <div class="debug-info">
+        <h3>🔮 타로 리딩 시스템 - 기본 테스트</h3>
+        <p>이 페이지가 보인다면 기본 HTML은 정상 작동합니다.</p>
+        <p>현재 시간: <span id="current-time"></span></p>
+        <p>Vue.js 로딩 상태: <span id="vue-status">확인 중...</span></p>
+        <p>CSS 로딩 상태: <span id="css-status">확인 중...</span></p>
+    </div>
+
     <div id="app">
         <!-- 로딩 화면 -->
         <div v-if="isLoading" class="loading-screen">
@@ -116,10 +148,59 @@
     
     <!-- 메인 애플리케이션 스크립트 -->
     <script type="module">
-        import supabase, { checkSupabaseConnection, showSetupGuide } from './js/services/supabase.js';
+        import supabase, { checkSupabaseConnection, showSetupGuide, simpleConnectionTest } from './js/services/supabase.js';
         import { loadCards } from './js/services/tarotService.js';
 
         const { createApp } = Vue;
+
+        // 기본 테스트 함수들
+        function updateCurrentTime() {
+            document.getElementById('current-time').textContent = new Date().toLocaleString();
+        }
+
+        function checkVueStatus() {
+            if (typeof Vue !== 'undefined') {
+                document.getElementById('vue-status').textContent = '✅ 로드됨';
+                document.getElementById('vue-status').className = 'success';
+            } else {
+                document.getElementById('vue-status').textContent = '❌ 로드 실패';
+                document.getElementById('vue-status').className = 'error';
+            }
+        }
+
+        function checkCSSStatus() {
+            const styleSheets = document.styleSheets;
+            let cssLoaded = false;
+            
+            for (let i = 0; i < styleSheets.length; i++) {
+                try {
+                    if (styleSheets[i].href && styleSheets[i].href.includes('style.css')) {
+                        cssLoaded = true;
+                        break;
+                    }
+                } catch (e) {
+                    // CORS 오류 무시
+                }
+            }
+            
+            if (cssLoaded) {
+                document.getElementById('css-status').textContent = '✅ 로드됨';
+                document.getElementById('css-status').className = 'success';
+            } else {
+                document.getElementById('css-status').textContent = '❌ 로드 실패';
+                document.getElementById('css-status').className = 'error';
+            }
+        }
+
+        // 페이지 로드 시 테스트 실행
+        window.addEventListener('load', function() {
+            updateCurrentTime();
+            checkVueStatus();
+            checkCSSStatus();
+            
+            // 1초마다 시간 업데이트
+            setInterval(updateCurrentTime, 1000);
+        });
 
         createApp({
             data() {
@@ -190,12 +271,20 @@
                 
                 async checkConnection() {
                     try {
-                        await checkSupabaseConnection();
-                        alert('연결이 성공했습니다!');
-                        this.showSetupGuide = false;
-                        await this.initializeApp();
+                        console.log('연결 확인 버튼 클릭됨');
+                        
+                        // 간단한 테스트 먼저 실행
+                        const simpleTest = await simpleConnectionTest();
+                        if (simpleTest) {
+                            alert('연결이 성공했습니다!');
+                            this.showSetupGuide = false;
+                            await this.initializeApp();
+                        } else {
+                            alert('연결에 실패했습니다. 콘솔을 확인해주세요.');
+                        }
                     } catch (error) {
-                        alert('연결에 실패했습니다. 설정을 확인해주세요.');
+                        console.error('연결 확인 중 오류:', error);
+                        alert(`연결에 실패했습니다: ${error.message}`);
                     }
                 },
                 
