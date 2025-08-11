@@ -394,7 +394,18 @@
                     return this.selectedCards[index].reversed ? '역방향' : '정방향';
                 },
                 startReading() {
-                    console.log('CardSpread에서 리딩 시작:', this.selectedCards);
+                    console.log('CardSpread에서 리딩 시작 호출됨');
+                    console.log('this.selectedCards:', this.selectedCards);
+                    console.log('this.selectedCards 타입:', typeof this.selectedCards);
+                    console.log('this.selectedCards 길이:', this.selectedCards ? this.selectedCards.length : 'undefined');
+                    
+                    if (!this.selectedCards || !Array.isArray(this.selectedCards) || this.selectedCards.length === 0) {
+                        console.error('CardSpread: 선택된 카드가 없습니다!');
+                        alert('선택된 카드가 없습니다. 카드를 다시 선택해주세요.');
+                        return;
+                    }
+                    
+                    console.log('CardSpread에서 이벤트 발생:', this.selectedCards);
                     this.$emit('start-reading', this.selectedCards);
                 }
             }
@@ -609,15 +620,21 @@
                         
                         console.log('리딩 시작 - 선택된 카드들:', cards);
                         console.log('선택된 목적:', this.selectedPurpose);
+                        console.log('this.selectedCards:', this.selectedCards);
                         
                         // cards가 undefined인 경우 this.selectedCards 사용
-                        const selectedCards = cards || this.selectedCards;
+                        let selectedCards = cards;
                         
                         if (!selectedCards || !Array.isArray(selectedCards) || selectedCards.length === 0) {
-                            throw new Error('선택된 카드가 없습니다.');
+                            console.log('cards 매개변수가 유효하지 않음, this.selectedCards 사용');
+                            selectedCards = this.selectedCards;
                         }
                         
-                        console.log('사용할 카드들:', selectedCards);
+                        if (!selectedCards || !Array.isArray(selectedCards) || selectedCards.length === 0) {
+                            throw new Error('선택된 카드가 없습니다. 카드를 다시 선택해주세요.');
+                        }
+                        
+                        console.log('최종 사용할 카드들:', selectedCards);
                         
                         // 선택된 카드들의 실제 의미를 분석
                         const cardMeanings = selectedCards.map((card, index) => {
