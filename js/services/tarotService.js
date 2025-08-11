@@ -1,5 +1,5 @@
 // 타로 서비스 클래스
-import { supabase } from './supabase.js';
+import supabase from './supabase.js';
 import { CardCache, findCardGroup, findSuitGroup, generateCombinationHash } from '../utils/cardUtils.js';
 
 class TarotService {
