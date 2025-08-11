@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔮 타로 리딩 시스템</title>
+    
+    <!-- CSS 파일 -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/tarot.css">
+    
+    <!-- Vue.js -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    
+    <!-- Supabase -->
+    <script src="https://cdn.skypack.dev/@supabase/supabase-js"></script>
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔮</text></svg>">
+</head>
+<body>
+    <div id="app">
+        <!-- 로딩 화면 -->
+        <div v-if="isLoading" class="loading-screen">
+            <div class="loading-content">
+                <div class="loading-spinner"></div>
+                <h2>타로 리딩 시스템 로딩 중...</h2>
+                <p>{{ loadingMessage }}</p>
+            </div>
+        </div>
+
+        <!-- 설정 안내 화면 -->
+        <div v-if="showSetupGuide" class="setup-guide">
+            <div class="setup-content">
+                <h1>🔮 타로 리딩 시스템 설정</h1>
+                <div class="setup-steps">
+                    <h3>설정 단계:</h3>
+                    <ol>
+                        <li>Supabase 프로젝트를 생성하세요</li>
+                        <li>데이터베이스 스키마를 설정하세요</li>
+                        <li>Supabase 연결 정보를 입력하세요</li>
+                        <li>페이지를 새로고침하세요</li>
+                    </ol>
+                </div>
+                <div class="setup-help">
+                    <h3>도움이 필요하신가요?</h3>
+                    <p>README.md 파일을 참고하여 설정을 완료해주세요.</p>
+                    <button @click="checkConnection" class="btn btn-primary">연결 확인</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 메인 애플리케이션 -->
+        <div v-if="!isLoading && !showSetupGuide" class="main-app">
+            <!-- 헤더 -->
+            <header class="app-header">
+                <h1>🔮 타로 리딩 시스템</h1>
+                <p>당신의 운명을 카드로 읽어보세요</p>
+            </header>
+
+            <!-- 메인 컨텐츠 -->
+            <main class="app-main">
+                <!-- 목적 선택 -->
+                <purpose-selector 
+                    v-if="currentStep === 'purpose'"
+                    @purpose-selected="onPurposeSelected">
+                </purpose-selector>
+
+                <!-- 타로 덱 -->
+                <tarot-deck 
+                    v-if="currentStep === 'deck'"
+                    :cards="cards"
+                    @selection-complete="onCardSelectionComplete">
+                </tarot-deck>
+
+                <!-- 카드 스프레드 -->
+                <card-spread 
+                    v-if="currentStep === 'spread'"
+                    :selectedCards="selectedCards"
+                    @start-reading="onStartReading"
+                    @reshuffle="onReshuffle">
+                </card-spread>
+
+                <!-- 리딩 결과 -->
+                <reading-result 
+                    v-if="currentStep === 'result'"
+                    :readingData="readingData"
+                    @new-reading="onNewReading">
+                </reading-result>
+
+                <!-- 사용자 히스토리 -->
+                <user-history 
+                    v-if="currentStep === 'history'"
+                    @back-to-main="currentStep = 'purpose'">
+                </user-history>
+            </main>
+
+            <!-- 네비게이션 -->
+            <nav class="app-nav">
+                <button @click="currentStep = 'purpose'" class="nav-btn">🏠 홈</button>
+                <button @click="currentStep = 'history'" class="nav-btn">📚 히스토리</button>
+                <button @click="showConnectionStatus" class="nav-btn">🔗 연결 상태</button>
+            </nav>
+        </div>
+    </div>
+
+    <!-- JavaScript 파일들 -->
+    <script type="module" src="js/services/supabase.js"></script>
+    <script type="module" src="js/utils/cardUtils.js"></script>
+    <script type="module" src="js/services/tarotService.js"></script>
+    <script type="module" src="js/components/PurposeSelector.js"></script>
+    <script type="module" src="js/components/TarotDeck.js"></script>
+    <script type="module" src="js/components/CardSpread.js"></script>
+    <script type="module" src="js/components/ReadingResult.js"></script>
+    <script type="module" src="js/components/UserHistory.js"></script>
+    
+    <!-- 메인 애플리케이션 스크립트 -->
+    <script type="module">
+        import supabase, { checkSupabaseConnection, showSetupGuide } from './js/services/supabase.js';
+        import { loadCards } from './js/services/tarotService.js';
+
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    isLoading: true,
+                    showSetupGuide: false,
+                    currentStep: 'purpose',
+                    selectedPurpose: null,
+                    cards: [],
+                    selectedCards: [],
+                    readingData: null,
+                    loadingMessage: '시스템을 초기화하고 있습니다...'
+                };
+            },
+            async mounted() {
+                await this.initializeApp();
+            },
+            methods: {
+                async initializeApp() {
+                    try {
+                        this.loadingMessage = 'Supabase 연결을 확인하고 있습니다...';
+                        
+                        // Supabase 연결 확인
+                        await checkSupabaseConnection();
+                        
+                        this.loadingMessage = '카드 데이터를 로딩하고 있습니다...';
+                        
+                        // 카드 데이터 로드
+                        this.cards = await loadCards();
+                        
+                        this.isLoading = false;
+                        console.log('애플리케이션 초기화 완료');
+                        
+                    } catch (error) {
+                        console.error('초기화 실패:', error);
+                        this.showSetupGuide = true;
+                        this.isLoading = false;
+                        showSetupGuide();
+                    }
+                },
+                
+                onPurposeSelected(purpose) {
+                    this.selectedPurpose = purpose;
+                    this.currentStep = 'deck';
+                },
+                
+                onCardSelectionComplete(cards) {
+                    this.selectedCards = cards;
+                    this.currentStep = 'spread';
+                },
+                
+                onStartReading(cards) {
+                    // 리딩 로직 구현 예정
+                    this.currentStep = 'result';
+                },
+                
+                onReshuffle() {
+                    this.selectedCards = [];
+                    this.currentStep = 'deck';
+                },
+                
+                onNewReading() {
+                    this.selectedPurpose = null;
+                    this.selectedCards = [];
+                    this.readingData = null;
+                    this.currentStep = 'purpose';
+                },
+                
+                async checkConnection() {
+                    try {
+                        await checkSupabaseConnection();
+                        alert('연결이 성공했습니다!');
+                        this.showSetupGuide = false;
+                        await this.initializeApp();
+                    } catch (error) {
+                        alert('연결에 실패했습니다. 설정을 확인해주세요.');
+                    }
+                },
+                
+                showConnectionStatus() {
+                    const status = this.isLoading ? '로딩 중' : 
+                                 this.showSetupGuide ? '설정 필요' : '연결됨';
+                    alert(`현재 상태: ${status}`);
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
