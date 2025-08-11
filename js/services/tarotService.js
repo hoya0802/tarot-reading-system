@@ -348,4 +348,16 @@ class TarotService {
     }
 }
 
-export { TarotService };
+// TarotService 인스턴스 생성
+const tarotService = new TarotService();
+
+// 편의 함수들
+async function loadCards() {
+    return await tarotService.getAllCards();
+}
+
+async function loadPurposes() {
+    return await tarotService.getAllPurposes();
+}
+
+export { TarotService, tarotService, loadCards, loadPurposes };
