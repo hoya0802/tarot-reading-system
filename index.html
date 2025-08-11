@@ -335,38 +335,50 @@
             }
         };
 
-        const CardSpread = {
+                const CardSpread = {
             props: ['selectedCards'],
+            mounted() {
+                console.log('CardSpread 컴포넌트 마운트됨');
+                console.log('selectedCards props:', this.selectedCards);
+            },
             template: `
                 <div class="section card-spread">
                     <h2>🎴 선택된 카드 스프레드</h2>
                     <p class="text-center mb-3">선택된 3장의 카드를 확인하고 리딩을 시작하세요</p>
                     
+                    <!-- 디버깅 정보 -->
+                    <div style="background: #f0f0f0; padding: 10px; margin: 10px; border: 1px solid #ccc; font-family: monospace; font-size: 12px;">
+                        <p><strong>디버깅 정보:</strong></p>
+                        <p>selectedCards 타입: {{ typeof selectedCards }}</p>
+                        <p>selectedCards 길이: {{ selectedCards ? selectedCards.length : 'undefined' }}</p>
+                        <p>selectedCards 내용: {{ JSON.stringify(selectedCards, null, 2) }}</p>
+                    </div>
+                    
                     <div class="spread-container">
                         <div class="spread-layout">
                                                          <div class="card-position past">
-                                 <h4>과거</h4>
-                                 <div class="card-display">
-                                     <div class="card-name">{{ getCardName(0) }}</div>
-                                     <div class="card-direction">{{ getCardDirection(0) }}</div>
-                                 </div>
-                             </div>
-                             
-                             <div class="card-position present">
-                                 <h4>현재</h4>
-                                 <div class="card-display">
-                                     <div class="card-name">{{ getCardName(1) }}</div>
-                                     <div class="card-direction">{{ getCardDirection(1) }}</div>
-                                 </div>
-                             </div>
-                             
-                             <div class="card-position future">
-                                 <h4>미래</h4>
-                                 <div class="card-display">
-                                     <div class="card-name">{{ getCardName(2) }}</div>
-                                     <div class="card-direction">{{ getCardDirection(2) }}</div>
-                                 </div>
-                             </div>
+                                <h4>과거</h4>
+                                <div class="card-display">
+                                    <div class="card-name">{{ getCardName(0) }}</div>
+                                    <div class="card-direction">{{ getCardDirection(0) }}</div>
+                                </div>
+                            </div>
+                            
+                            <div class="card-position present">
+                                <h4>현재</h4>
+                                <div class="card-display">
+                                    <div class="card-name">{{ getCardName(1) }}</div>
+                                    <div class="card-direction">{{ getCardDirection(1) }}</div>
+                                </div>
+                            </div>
+                            
+                            <div class="card-position future">
+                                <h4>미래</h4>
+                                <div class="card-display">
+                                    <div class="card-name">{{ getCardName(2) }}</div>
+                                    <div class="card-direction">{{ getCardDirection(2) }}</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
@@ -610,8 +622,16 @@
                 },
                 
                 onCardSelectionComplete(cards) {
+                    console.log('onCardSelectionComplete 호출됨');
+                    console.log('전달받은 cards:', cards);
+                    console.log('cards 타입:', typeof cards);
+                    console.log('cards 길이:', cards ? cards.length : 'undefined');
+                    
                     this.selectedCards = cards;
+                    console.log('this.selectedCards 설정됨:', this.selectedCards);
+                    
                     this.currentStep = 'spread';
+                    console.log('currentStep을 spread로 변경');
                 },
                 
                 async onStartReading(cards) {
