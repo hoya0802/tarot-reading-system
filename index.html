@@ -346,19 +346,14 @@
                  selectedCards: {
                      immediate: true,
                      deep: true,
-                     handler(newCards, oldCards) {
+                     handler(newCards) {
                          console.log('CardSpread selectedCards 변경됨:', newCards);
-                         console.log('이전 selectedCards:', oldCards);
                          
-                         // newCards가 유효한 배열이고 길이가 0보다 큰 경우에만 설정
+                         // 간단하고 명확한 로직
                          if (newCards && Array.isArray(newCards) && newCards.length > 0) {
                              this.localSelectedCards = [...newCards];
                              console.log('localSelectedCards 설정됨:', this.localSelectedCards);
-                         } else if (newCards === undefined || newCards === null) {
-                             // undefined나 null인 경우 기존 데이터 유지
-                             console.log('selectedCards가 undefined/null이므로 기존 데이터 유지');
                          } else {
-                             // 빈 배열인 경우에만 빈 배열로 설정
                              this.localSelectedCards = [];
                              console.log('localSelectedCards 빈 배열로 설정됨');
                          }
@@ -684,22 +679,26 @@
                     this.currentStep = 'deck';
                 },
                 
-                onCardSelectionComplete(cards) {
-                    console.log('=== onCardSelectionComplete 호출됨 ===');
-                    console.log('전달받은 cards:', cards);
-                    console.log('cards 타입:', typeof cards);
-                    console.log('cards 길이:', cards ? cards.length : 'undefined');
-                    console.log('cards 내용:', JSON.stringify(cards, null, 2));
-                    
-                    this.selectedCards = cards;
-                    console.log('this.selectedCards 설정됨:', this.selectedCards);
-                    console.log('this.selectedCards 타입:', typeof this.selectedCards);
-                    console.log('this.selectedCards 길이:', this.selectedCards ? this.selectedCards.length : 'undefined');
-                    
-                    this.currentStep = 'spread';
-                    console.log('currentStep을 spread로 변경');
-                    console.log('=== onCardSelectionComplete 완료 ===');
-                },
+                                 onCardSelectionComplete(cards) {
+                     console.log('=== onCardSelectionComplete 호출됨 ===');
+                     console.log('전달받은 cards:', cards);
+                     console.log('cards 타입:', typeof cards);
+                     console.log('cards 길이:', cards ? cards.length : 'undefined');
+                     console.log('cards 내용:', JSON.stringify(cards, null, 2));
+                     
+                     // 1. 먼저 데이터 설정
+                     this.selectedCards = cards;
+                     console.log('this.selectedCards 설정됨:', this.selectedCards);
+                     console.log('this.selectedCards 타입:', typeof this.selectedCards);
+                     console.log('this.selectedCards 길이:', this.selectedCards ? this.selectedCards.length : 'undefined');
+                     
+                     // 2. 다음 tick에서 컴포넌트 마운트 (Vue의 반응형 시스템이 업데이트될 시간을 줌)
+                     this.$nextTick(() => {
+                         this.currentStep = 'spread';
+                         console.log('currentStep을 spread로 변경 (nextTick 후)');
+                         console.log('=== onCardSelectionComplete 완료 ===');
+                     });
+                 },
                 
                 async onStartReading(cards) {
                     try {
