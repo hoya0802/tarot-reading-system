@@ -479,12 +479,15 @@ const CardCache = {
     }
 };
 
+// 모든 함수와 상수를 한 번에 export
 export {
     CARD_GROUPS,
     MINOR_SUITS,
     findCardGroup,
     findSuitGroup,
     getCardImageUrl,
+    getCardColorTheme,
+    generateCardPlaceholder,
     getCardDefaultImage,
     formatCardName,
     getCardTypeDisplay,
