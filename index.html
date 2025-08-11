@@ -184,6 +184,286 @@
             `
         };
 
+        const TarotDeck = {
+            props: ['cards'],
+            data() {
+                return {
+                    selectedCards: [],
+                    currentFilter: 'all',
+                    searchTerm: '',
+                    sortBy: 'id'
+                };
+            },
+            computed: {
+                filteredCards() {
+                    let cards = this.cards || [];
+                    
+                    // 필터링 (간단한 버전)
+                    if (this.currentFilter !== 'all') {
+                        cards = cards.filter(card => {
+                            if (this.currentFilter === 'major') return card.major_minor === 'major';
+                            if (this.currentFilter === 'minor') return card.major_minor === 'minor';
+                            return card.suit === this.currentFilter;
+                        });
+                    }
+                    
+                    // 검색
+                    if (this.searchTerm) {
+                        const term = this.searchTerm.toLowerCase();
+                        cards = cards.filter(card => 
+                            card.name.toLowerCase().includes(term) ||
+                            (card.keywords && card.keywords.toLowerCase().includes(term))
+                        );
+                    }
+                    
+                    // 정렬
+                    cards = cards.sort((a, b) => {
+                        if (this.sortBy === 'name') return a.name.localeCompare(b.name);
+                        if (this.sortBy === 'type') {
+                            if (a.major_minor !== b.major_minor) {
+                                return a.major_minor === 'major' ? -1 : 1;
+                            }
+                            return a.id - b.id;
+                        }
+                        return a.id - b.id;
+                    });
+                    
+                    return cards;
+                }
+            },
+            template: `
+                <div class="section tarot-deck">
+                    <h2>🃏 타로 카드 선택</h2>
+                    <p class="text-center mb-3">3장의 카드를 선택해주세요 ({{ selectedCards.length }}/3)</p>
+                    
+                    <!-- 필터 및 검색 -->
+                    <div class="deck-controls">
+                        <div class="filter-section">
+                            <select v-model="currentFilter" class="filter-select">
+                                <option value="all">전체</option>
+                                <option value="major">메이저 아르카나</option>
+                                <option value="minor">마이너 아르카나</option>
+                                <option value="wands">완드</option>
+                                <option value="cups">컵</option>
+                                <option value="swords">검</option>
+                                <option value="pentacles">펜타클</option>
+                            </select>
+                        </div>
+                        
+                        <div class="search-section">
+                            <input 
+                                type="text" 
+                                v-model="searchTerm"
+                                placeholder="카드 이름으로 검색..."
+                                class="search-input">
+                        </div>
+                    </div>
+                    
+                    <!-- 선택된 카드 표시 -->
+                    <div v-if="selectedCards.length > 0" class="selected-cards-display">
+                        <h4>선택된 카드</h4>
+                        <div class="selected-cards-grid">
+                            <div 
+                                v-for="(card, index) in selectedCards" 
+                                :key="card.id"
+                                class="selected-card-item">
+                                <div class="card-name">{{ card.name }}</div>
+                                <button @click="removeCard(index)" class="remove-btn">제거</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 카드 그리드 -->
+                    <div class="cards-container">
+                        <div class="cards-grid">
+                            <div 
+                                v-for="card in filteredCards" 
+                                :key="card.id"
+                                class="tarot-card"
+                                :class="{ 'selected': selectedCards.find(c => c.id === card.id) }"
+                                @click="selectCard(card)">
+                                
+                                <div class="card-name">{{ card.name }}</div>
+                                <div class="card-type">{{ card.major_minor === 'major' ? '메이저' : '마이너' }}</div>
+                                
+                                <div v-if="selectedCards.find(c => c.id === card.id)" class="selected-indicator">
+                                    ✓ 선택됨
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div v-if="filteredCards.length === 0" class="no-cards">
+                            <p>검색 조건에 맞는 카드가 없습니다.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- 선택 완료 버튼 -->
+                    <div v-if="selectedCards.length === 3" class="selection-complete">
+                        <button @click="completeSelection" class="btn btn-secondary">
+                            카드 선택 완료 (3/3)
+                        </button>
+                    </div>
+                </div>
+            `,
+            methods: {
+                selectCard(card) {
+                    if (this.selectedCards.length >= 3) {
+                        alert('이미 3장의 카드를 선택했습니다.');
+                        return;
+                    }
+                    
+                    if (this.selectedCards.find(c => c.id === card.id)) {
+                        alert('이미 선택된 카드입니다.');
+                        return;
+                    }
+                    
+                    this.selectedCards.push({
+                        ...card,
+                        reversed: Math.random() > 0.5 // 랜덤 역방향
+                    });
+                },
+                
+                removeCard(index) {
+                    this.selectedCards.splice(index, 1);
+                },
+                
+                completeSelection() {
+                    if (this.selectedCards.length === 3) {
+                        this.$emit('selection-complete', this.selectedCards);
+                    }
+                }
+            }
+        };
+
+        const CardSpread = {
+            props: ['selectedCards'],
+            template: `
+                <div class="section card-spread">
+                    <h2>🎴 선택된 카드 스프레드</h2>
+                    <p class="text-center mb-3">선택된 3장의 카드를 확인하고 리딩을 시작하세요</p>
+                    
+                    <div class="spread-container">
+                        <div class="spread-layout">
+                            <div class="card-position past">
+                                <h4>과거</h4>
+                                <div class="card-display">
+                                    <div class="card-name">{{ selectedCards[0]?.name || '카드 없음' }}</div>
+                                    <div class="card-direction">{{ selectedCards[0]?.reversed ? '역방향' : '정방향' }}</div>
+                                </div>
+                            </div>
+                            
+                            <div class="card-position present">
+                                <h4>현재</h4>
+                                <div class="card-display">
+                                    <div class="card-name">{{ selectedCards[1]?.name || '카드 없음' }}</div>
+                                    <div class="card-direction">{{ selectedCards[1]?.reversed ? '역방향' : '정방향' }}</div>
+                                </div>
+                            </div>
+                            
+                            <div class="card-position future">
+                                <h4>미래</h4>
+                                <div class="card-display">
+                                    <div class="card-name">{{ selectedCards[2]?.name || '카드 없음' }}</div>
+                                    <div class="card-direction">{{ selectedCards[2]?.reversed ? '역방향' : '정방향' }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="spread-actions">
+                        <button @click="$emit('start-reading', selectedCards)" class="btn btn-primary">
+                            🔮 리딩 시작
+                        </button>
+                        <button @click="$emit('reshuffle')" class="btn btn-secondary">
+                            🔄 다시 섞기
+                        </button>
+                    </div>
+                </div>
+            `
+        };
+
+        const ReadingResult = {
+            props: ['readingData'],
+            template: `
+                <div class="section reading-result">
+                    <h2>✨ 타로 리딩 결과</h2>
+                    
+                    <div v-if="readingData" class="result-content">
+                        <div class="result-summary">
+                            <h3>📋 리딩 요약</h3>
+                            <p><strong>목적:</strong> {{ getPurposeName(readingData.purpose) }}</p>
+                            <p><strong>리딩 시간:</strong> {{ formatDate(readingData.timestamp) }}</p>
+                        </div>
+                        
+                        <div class="cards-summary">
+                            <h3>🎴 선택된 카드</h3>
+                            <div class="selected-cards-summary">
+                                <div v-for="(card, index) in readingData.cards" :key="card.id" class="card-summary">
+                                    <div class="position">{{ getPositionName(index) }}</div>
+                                    <div class="card-info">
+                                        <div class="card-name">{{ card.name }}</div>
+                                        <div class="card-direction">{{ card.reversed ? '역방향' : '정방향' }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="reading-interpretation">
+                            <h3>🔮 해석</h3>
+                            <div class="interpretation-content">
+                                <p><strong>전체적인 의미:</strong></p>
+                                <p>{{ readingData.combination?.overall_meaning || '기본적인 해석이 제공됩니다.' }}</p>
+                                
+                                <p><strong>조언:</strong></p>
+                                <p>{{ readingData.combination?.advice || '현재 상황을 잘 관찰하고 미래를 준비하세요.' }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="result-actions">
+                        <button @click="$emit('new-reading')" class="btn btn-primary">
+                            🆕 새로운 리딩
+                        </button>
+                    </div>
+                </div>
+            `,
+            methods: {
+                getPurposeName(purpose) {
+                    const purposes = {
+                        'love': '연애/사랑',
+                        'career': '직장/일',
+                        'daily': '오늘의 운세',
+                        'health': '건강',
+                        'money': '금전'
+                    };
+                    return purposes[purpose] || purpose;
+                },
+                formatDate(timestamp) {
+                    return new Date(timestamp).toLocaleString('ko-KR');
+                },
+                getPositionName(index) {
+                    const positions = ['과거', '현재', '미래'];
+                    return positions[index] || '';
+                }
+            }
+        };
+
+        const UserHistory = {
+            template: `
+                <div class="section user-history">
+                    <h2>📚 리딩 히스토리</h2>
+                    <p class="text-center mb-3">이전 리딩 기록을 확인하세요</p>
+                    
+                    <div class="history-content">
+                        <p>히스토리 기능은 로그인 후 사용할 수 있습니다.</p>
+                        <button @click="$emit('back-to-main')" class="btn btn-secondary">
+                            ← 메인으로 돌아가기
+                        </button>
+                    </div>
+                </div>
+            `
+        };
+
         // 기본 테스트 함수들
         function updateCurrentTime() {
             document.getElementById('current-time').textContent = new Date().toLocaleString();
@@ -283,9 +563,28 @@
                     this.currentStep = 'spread';
                 },
                 
-                onStartReading(cards) {
-                    // 리딩 로직 구현 예정
-                    this.currentStep = 'result';
+                async onStartReading(cards) {
+                    try {
+                        this.isLoading = true;
+                        
+                        // 리딩 결과 생성
+                        this.readingData = {
+                            cards: cards,
+                            purpose: this.selectedPurpose,
+                            combination: {
+                                overall_meaning: '선택된 카드들의 조합을 통해 현재 상황을 분석한 결과, 균형 잡힌 발전의 시기입니다.',
+                                advice: '현재의 선택과 행동이 미래에 큰 영향을 미칠 것입니다. 신중하게 판단하시기 바랍니다.'
+                            },
+                            timestamp: new Date()
+                        };
+                        
+                        this.currentStep = 'result';
+                    } catch (error) {
+                        console.error('리딩 생성 실패:', error);
+                        alert('리딩을 생성하는 중 오류가 발생했습니다.');
+                    } finally {
+                        this.isLoading = false;
+                    }
                 },
                 
                 onReshuffle() {
@@ -329,6 +628,10 @@
 
         // 컴포넌트 등록
         app.component('purpose-selector', PurposeSelector);
+        app.component('tarot-deck', TarotDeck);
+        app.component('card-spread', CardSpread);
+        app.component('reading-result', ReadingResult);
+        app.component('user-history', UserHistory);
 
         // 앱 마운트
         app.mount('#app');
