@@ -181,6 +181,98 @@ class TarotService {
         }
     }
 
+    // 한 장 리딩 수행
+    async performSingleCardReading(cardId, purposeType, isReversed) {
+        try {
+            if (!window.supabase) {
+                await window.initializeSupabase();
+            }
+
+            // 목적별 카드 해석 조회
+            const cardReading = await this.getPurposeReading(cardId, purposeType, isReversed);
+            
+            // 한 장 리딩 특화 해석 생성
+            const singleInsight = this.generateSingleCardInsight(cardReading, purposeType, isReversed);
+            
+            return {
+                cardReading,
+                singleInsight,
+                dailyGuidance: this.generateDailyGuidance(cardReading, purposeType),
+                reflection: this.generateReflection(cardReading, purposeType, isReversed)
+            };
+        } catch (error) {
+            console.error('한 장 리딩 수행 실패:', error);
+            throw error;
+        }
+    }
+
+    // 한 장 리딩 특화 해석 생성
+    generateSingleCardInsight(cardReading, purposeType, isReversed) {
+        const insights = {
+            love: {
+                title: '💕 연애 특별 조언',
+                focus: '오늘 연애에서 가장 중요한 것',
+                action: '취해야 할 행동',
+                avoid: '피해야 할 것',
+                energy: isReversed ? '내면의 감정을 돌아보는 시간' : '적극적인 사랑 표현의 시간'
+            },
+            career: {
+                title: '💼 직장 가이드',
+                focus: '업무에서 집중할 점',
+                action: '오늘의 업무 전략',
+                avoid: '주의해야 할 상황',
+                energy: isReversed ? '신중한 판단이 필요한 시기' : '적극적인 도전의 시기'
+            },
+            daily: {
+                title: '☀️ 오늘의 집중점',
+                focus: '오늘의 핵심 에너지',
+                action: '오늘 해야 할 일',
+                avoid: '오늘 피해야 할 것',
+                energy: isReversed ? '내면을 돌아보는 하루' : '외향적 활동의 하루'
+            },
+            health: {
+                title: '🌿 건강 주의사항',
+                focus: '건강 관리 포인트',
+                action: '건강을 위한 행동',
+                avoid: '건강에 해로운 것',
+                energy: isReversed ? '휴식과 회복이 필요한 시기' : '활동적인 건강 관리 시기'
+            },
+            money: {
+                title: '💰 금전 전망',
+                focus: '재정 관리 포인트',
+                action: '재정을 위한 행동',
+                avoid: '재정적 위험 요소',
+                energy: isReversed ? '신중한 재정 관리 시기' : '투자 기회 탐색 시기'
+            }
+        };
+        
+        return insights[purposeType] || insights.daily;
+    }
+
+    // 일일 가이드 생성
+    generateDailyGuidance(cardReading, purposeType) {
+        const guidance = {
+            morning: '아침에는 ' + cardReading.advice,
+            afternoon: '오후에는 ' + cardReading.meaning,
+            evening: '저녁에는 오늘의 경험을 되돌아보세요.'
+        };
+        
+        return guidance;
+    }
+
+    // 성찰 포인트 생성
+    generateReflection(cardReading, purposeType, isReversed) {
+        const baseReflection = isReversed 
+            ? '현재 상황에서 무엇을 놓치고 있는지 생각해보세요.'
+            : '현재의 긍정적인 에너지를 어떻게 활용할지 고민해보세요.';
+            
+        return {
+            question: `${cardReading.keywords}와 관련하여 어떤 변화가 필요할까요?`,
+            reflection: baseReflection,
+            action: cardReading.advice
+        };
+    }
+
     // 사용자 리딩 저장
     async saveUserReading(cardIds, reversedFlags, readingResult) {
         try {
