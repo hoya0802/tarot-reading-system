@@ -400,6 +400,9 @@
         // NumerologyService import
         import { NumerologyService } from './js/services/numerologyService.js';
         
+        // === 버전 정보 ===
+        const APP_VERSION = '0.0.1';
+        
         // === 전역 변수들 ===
         let currentStep = 'birthDateInput';
         let selectedPurpose = null;
@@ -701,6 +704,8 @@
         // === 초기화 ===
         document.addEventListener('DOMContentLoaded', async function() {
             console.log('=== 애플리케이션 시작 ===');
+            console.log('버전:', APP_VERSION);
+            console.log('최근 업데이트: 1장 리딩 특화 해석 개선');
             
             // 생년월일 폼 초기화
             initializeBirthDateForm();
