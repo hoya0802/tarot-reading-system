@@ -479,23 +479,21 @@ const CardCache = {
     }
 };
 
-// 모든 함수와 상수를 한 번에 export
-export {
-    CARD_GROUPS,
-    MINOR_SUITS,
-    findCardGroup,
-    findSuitGroup,
-    getCardImageUrl,
-    getCardColorTheme,
-    generateCardPlaceholder,
-    getCardDefaultImage,
-    formatCardName,
-    getCardTypeDisplay,
-    getPurposeIcon,
-    getPurposeName,
-    generateCombinationHash,
-    filterCards,
-    searchCards,
-    sortCards,
-    CardCache
-};
+// 전역 함수로 노출 (모듈 시스템 없이)
+window.CARD_GROUPS = CARD_GROUPS;
+window.MINOR_SUITS = MINOR_SUITS;
+window.findCardGroup = findCardGroup;
+window.findSuitGroup = findSuitGroup;
+window.getCardImageUrl = getCardImageUrl;
+window.getCardColorTheme = getCardColorTheme;
+window.generateCardPlaceholder = generateCardPlaceholder;
+window.getCardDefaultImage = getCardDefaultImage;
+window.formatCardName = formatCardName;
+window.getCardTypeDisplay = getCardTypeDisplay;
+window.getPurposeIcon = getPurposeIcon;
+window.getPurposeName = getPurposeName;
+window.generateCombinationHash = generateCombinationHash;
+window.filterCards = filterCards;
+window.searchCards = searchCards;
+window.sortCards = sortCards;
+window.CardCache = CardCache;
