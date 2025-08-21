@@ -28,6 +28,7 @@
                 <div id="setup" class="section setup" style="display: none;">
                     <h2>🔧 설정이 필요합니다</h2>
                     <p>Supabase 연결을 확인해주세요.</p>
+                    <div id="setupStatus">연결 상태 확인 중...</div>
                     <button onclick="testConnection()" class="btn btn-primary">연결 확인</button>
                 </div>
 
@@ -76,7 +77,7 @@
                             🔄 다시 시작
                         </button>
                     </div>
-                    
+
                     <!-- 선택된 카드 표시 -->
                     <div class="selected-cards-display">
                         <h3>선택된 카드 (<span id="selectedCount">0</span>/3)</h3>
@@ -94,12 +95,12 @@
                     <h2>🎴 선택된 카드 스프레드</h2>
                     <p class="text-center mb-3">선택된 3장의 카드를 확인하고 리딩을 시작하세요</p>
                     
-                                         <!-- 디버깅 정보 -->
+                    <!-- 디버깅 정보 -->
                     <div id="spreadDebug" class="debug-info">
                         <p><strong>스프레드 디버깅 정보:</strong></p>
                         <p>선택된 카드 수: <span id="debugCardCount">0</span></p>
                         <p>선택된 목적: <span id="debugPurpose">없음</span></p>
-                     </div>
+                    </div>
                     
                     <div class="spread-container">
                         <div class="spread-layout">
@@ -129,7 +130,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="text-center mt-4">
                         <button class="btn btn-primary" onclick="startReading()">
                             ✨ 리딩 시작하기
@@ -157,11 +158,11 @@
                             <h3>🔮 전체적인 해석</h3>
                             <p id="overallMeaning">리딩 결과가 여기에 표시됩니다.</p>
                         </div>
-                        
+
                         <div class="result-advice">
                             <h3>💡 조언</h3>
                             <p id="advice">조언이 여기에 표시됩니다.</p>
-                                    </div>
+                        </div>
 
                         <div class="result-cards">
                             <h3>📋 선택된 카드들</h3>
@@ -169,7 +170,7 @@
                                 <!-- 선택된 카드들의 상세 정보가 여기에 표시됩니다 -->
                             </div>
                         </div>
-                        
+
                         <div class="text-center mt-4">
                             <button class="btn btn-primary" onclick="startOver()">
                                 🔄 새로운 리딩 시작
@@ -181,37 +182,95 @@
         </main>
     </div>
 
-    <!-- JavaScript 파일들 -->
-    <script src="js/services/supabase.js"></script>
-    <script src="js/services/tarotService.js"></script>
-    <script src="js/utils/cardUtils.js"></script>
-    
     <script>
-        // 전역 변수들
+        // === 전역 변수들 ===
         let currentStep = 'purpose';
         let selectedPurpose = null;
         let selectedCards = [];
         let allCards = [];
         let readingData = null;
+        let supabase = null;
 
-        // 초기화
-        document.addEventListener('DOMContentLoaded', async function() {
-            console.log('=== 애플리케이션 시작 ===');
-            await initializeApp();
-        });
+        // === Supabase 설정 ===
+        const SUPABASE_URL = 'https://qcubdynkiawpcmsflxfu.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFjdWJkeW5raWF3cGNtc2ZseGZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI0MDgxNzUsImV4cCI6MjA2Nzk4NDE3NX0.c2dFWAcMq62druoosEYY2JaT5FOL--7V9qjCTtPUzi0';
 
-        // 카드 데이터 가져오기 함수
+        // === Supabase 초기화 ===
+        async function initializeSupabase() {
+            try {
+                console.log('Supabase 초기화 시작...');
+                const { createClient } = await import('https://cdn.skypack.dev/@supabase/supabase-js');
+                supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                console.log('Supabase 클라이언트 초기화 완료');
+                return true;
+            } catch (error) {
+                console.error('Supabase 클라이언트 초기화 실패:', error);
+                return false;
+            }
+        }
+
+        // === 연결 테스트 ===
+        async function simpleConnectionTest() {
+            try {
+                console.log('간단한 연결 테스트 시작...');
+                
+                if (!supabase) {
+                    const initialized = await initializeSupabase();
+                    if (!initialized) {
+                        return false;
+                    }
+                }
+                
+                const { data, error } = await supabase
+                    .from('tarot_cards')
+                    .select('name')
+                    .limit(1);
+                
+                if (error) {
+                    console.error('간단한 테스트 실패:', error);
+                    return false;
+                }
+                
+                console.log('간단한 테스트 성공:', data);
+                return true;
+            } catch (error) {
+                console.error('간단한 테스트 예외:', error);
+                return false;
+            }
+        }
+
+        // === 카드 데이터 가져오기 ===
         async function fetchCards() {
             try {
                 console.log('카드 데이터 가져오기 시작...');
-                const cards = await window.loadCards();
-                console.log('카드 데이터 로드 완료:', cards.length, '장');
-                return cards;
+                
+                if (!supabase) {
+                    const initialized = await initializeSupabase();
+                    if (!initialized) {
+                        throw new Error('Supabase 초기화 실패');
+                    }
+                }
+
+                const { data, error } = await supabase
+                    .from('tarot_cards')
+                    .select('*')
+                    .order('id');
+                
+                if (error) throw error;
+                
+                console.log('카드 데이터 로드 완료:', data.length, '장');
+                return data;
             } catch (error) {
                 console.error('카드 데이터 가져오기 실패:', error);
                 throw error;
             }
         }
+
+        // === 초기화 ===
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('=== 애플리케이션 시작 ===');
+            await initializeApp();
+        });
 
         async function initializeApp() {
             try {
@@ -241,7 +300,7 @@
             }
         }
 
-        // 섹션 표시 함수
+        // === 섹션 표시 함수 ===
         function showSection(sectionName) {
             console.log('섹션 변경:', currentStep, '→', sectionName);
             
@@ -262,24 +321,29 @@
             document.getElementById('loading').style.display = show ? 'block' : 'none';
         }
 
-        // 연결 테스트
+        // === 연결 테스트 ===
         async function testConnection() {
             try {
                 console.log('연결 확인 버튼 클릭됨');
+                document.getElementById('setupStatus').textContent = '연결 테스트 중...';
+                
                 const isConnected = await simpleConnectionTest();
                 if (isConnected) {
+                    document.getElementById('setupStatus').textContent = '연결 성공!';
                     alert('연결이 성공했습니다!');
                     await initializeApp();
-            } else {
+                } else {
+                    document.getElementById('setupStatus').textContent = '연결 실패';
                     alert('연결에 실패했습니다. 콘솔을 확인해주세요.');
                 }
             } catch (error) {
                 console.error('연결 확인 중 오류:', error);
+                document.getElementById('setupStatus').textContent = `연결 오류: ${error.message}`;
                 alert(`연결에 실패했습니다: ${error.message}`);
             }
         }
 
-        // 목적 선택
+        // === 목적 선택 ===
         function selectPurpose(purpose) {
             console.log('=== 목적 선택됨 ===');
             console.log('선택된 목적:', purpose);
@@ -288,7 +352,7 @@
             showSection('deck');
         }
 
-        // 랜덤 카드 선택
+        // === 랜덤 카드 선택 ===
         function selectRandomCard() {
             console.log('=== 랜덤 카드 선택 ===');
             console.log('현재 선택된 카드 수:', selectedCards.length);
@@ -322,7 +386,7 @@
             updateSelectedCardsDisplay();
         }
 
-        // 선택된 카드 표시 업데이트
+        // === 선택된 카드 표시 업데이트 ===
         function updateSelectedCardsDisplay() {
             const countElement = document.getElementById('selectedCount');
             const listElement = document.getElementById('selectedCardsList');
@@ -359,21 +423,21 @@
             }
         }
 
-        // 카드 제거
+        // === 카드 제거 ===
         function removeCard(index) {
             console.log('카드 제거:', index);
             selectedCards.splice(index, 1);
             updateSelectedCardsDisplay();
         }
 
-        // 선택 초기화
+        // === 선택 초기화 ===
         function resetSelection() {
             console.log('선택 초기화');
             selectedCards = [];
             updateSelectedCardsDisplay();
         }
 
-        // 스프레드로 이동
+        // === 스프레드로 이동 ===
         function goToSpread() {
             console.log('=== 스프레드로 이동 ===');
             console.log('선택된 카드들:', selectedCards);
@@ -387,7 +451,7 @@
             showSection('spread');
         }
 
-        // 스프레드 화면 업데이트
+        // === 스프레드 화면 업데이트 ===
         function updateSpreadDisplay() {
             console.log('=== 스프레드 화면 업데이트 ===');
             
@@ -411,7 +475,7 @@
             });
         }
 
-        // 리딩 시작
+        // === 리딩 시작 ===
         async function startReading() {
             console.log('=== 리딩 시작 ===');
             console.log('선택된 카드들:', selectedCards);
@@ -422,11 +486,11 @@
                 
                 // 카드 의미 분석
                 const cardMeanings = selectedCards.map((card, index) => ({
-                                name: card.name,
+                    name: card.name,
                     position: ['과거', '현재', '미래'][index],
-                                meaning: card.reversed ? card.reversed_meaning : card.upright_meaning,
-                                keywords: card.keywords,
-                                isReversed: card.reversed
+                    meaning: card.reversed ? card.reversed_meaning : card.upright_meaning,
+                    keywords: card.keywords,
+                    isReversed: card.reversed
                 }));
                 
                 console.log('카드 의미 분석:', cardMeanings);
@@ -439,14 +503,14 @@
                 readingData = {
                     cards: selectedCards,
                     purpose: selectedPurpose,
-                            cardMeanings: cardMeanings,
-                            combination: {
-                                overall_meaning: overallMeaning,
-                                advice: advice
-                            },
-                            timestamp: new Date()
-                        };
-                        
+                    cardMeanings: cardMeanings,
+                    combination: {
+                        overall_meaning: overallMeaning,
+                        advice: advice
+                    },
+                    timestamp: new Date()
+                };
+                
                 console.log('리딩 데이터 생성 완료:', readingData);
                 
                 updateResultDisplay();
@@ -460,7 +524,7 @@
             }
         }
 
-        // 결과 화면 업데이트
+        // === 결과 화면 업데이트 ===
         function updateResultDisplay() {
             console.log('=== 결과 화면 업데이트 ===');
             
@@ -490,17 +554,17 @@
             });
         }
 
-        // 해석 생성 함수들
+        // === 해석 생성 함수들 ===
         function generateOverallMeaning(cardMeanings, purpose) {
-                        const purposeNames = {
-                            'love': '사랑과 관계',
-                            'career': '직장과 업무',
-                            'daily': '오늘의 운세',
-                            'health': '건강과 웰빙',
-                            'money': '재정과 돈'
-                        };
-                        
-                        const purposeName = purposeNames[purpose] || '일반적인';
+            const purposeNames = {
+                'love': '사랑과 관계',
+                'career': '직장과 업무',
+                'daily': '오늘의 운세',
+                'health': '건강과 웰빙',
+                'money': '재정과 돈'
+            };
+            
+            const purposeName = purposeNames[purpose] || '일반적인';
             const cardNames = cardMeanings.map(card => card.name);
             const keywords = cardMeanings.map(card => card.keywords).join(', ');
             
@@ -510,17 +574,17 @@
         function generateAdvice(cardMeanings, purpose) {
             const reversedCards = cardMeanings.filter(card => card.isReversed);
             const uprightCards = cardMeanings.filter(card => !card.isReversed);
-                        
-                        if (reversedCards.length > 1) {
+            
+            if (reversedCards.length > 1) {
                 return '역방향 카드가 많아 현재 어려운 시기를 겪고 있을 수 있습니다. 인내심을 가지고 상황을 관찰하세요.';
-                        } else if (uprightCards.length > 1) {
+            } else if (uprightCards.length > 1) {
                 return '정방향 카드가 많아 긍정적인 에너지가 흐르고 있습니다. 자신의 직감을 믿고 행동하세요.';
-                        } else {
+            } else {
                 return '균형 잡힌 카드 배치입니다. 현재 상황을 객관적으로 분석하고 신중하게 판단하세요.';
             }
         }
 
-        // 네비게이션 함수들
+        // === 네비게이션 함수들 ===
         function goToSelection() {
             showSection('deck');
         }
