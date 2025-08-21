@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>타로 리딩 시스템 v0.0.1</title>
+    <title>타로 리딩 시스템 v0.0.2</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/tarot.css">
 </head>
@@ -11,7 +11,7 @@
     <div id="app">
         <header class="header">
             <div class="container">
-                <h1>🔮 타로 리딩 시스템 <span class="version">v0.0.1</span></h1>
+                <h1>🔮 타로 리딩 시스템 <span class="version">v0.0.2</span></h1>
                 <p>당신의 운명을 읽어드립니다</p>
             </div>
         </header>
@@ -401,7 +401,7 @@
         import { NumerologyService } from './js/services/numerologyService.js';
         
         // === 버전 정보 ===
-        const APP_VERSION = '0.0.1';
+        const APP_VERSION = '0.0.2';
         
         // === 전역 변수들 ===
         let currentStep = 'birthDateInput';
@@ -705,7 +705,7 @@
         document.addEventListener('DOMContentLoaded', async function() {
             console.log('=== 애플리케이션 시작 ===');
             console.log('버전:', APP_VERSION);
-            console.log('최근 업데이트: 1장 리딩 특화 해석 개선');
+            console.log('최근 업데이트: 1장 리딩 핵심 메시지 개선');
             
             // 생년월일 폼 초기화
             initializeBirthDateForm();
@@ -1672,37 +1672,73 @@
             const purposeInsights = {
                 love: {
                     title: '💕 연애 특별 조언',
-                    focus: meaning,
+                    focus: generateLoveFocus(meaning, isReversed),
                     action: generateLoveAction(meaning, isReversed),
                     avoid: generateLoveAvoid(meaning, isReversed)
                 },
                 career: {
                     title: '💼 직장 가이드',
-                    focus: meaning,
+                    focus: generateCareerFocus(meaning, isReversed),
                     action: generateCareerAction(meaning, isReversed),
                     avoid: generateCareerAvoid(meaning, isReversed)
                 },
                 daily: {
                     title: '☀️ 오늘의 집중점',
-                    focus: meaning,
+                    focus: generateDailyFocus(meaning, isReversed),
                     action: generateDailyAction(meaning, isReversed),
                     avoid: generateDailyAvoid(meaning, isReversed)
                 },
                 health: {
                     title: '🌿 건강 주의사항',
-                    focus: meaning,
+                    focus: generateHealthFocus(meaning, isReversed),
                     action: generateHealthAction(meaning, isReversed),
                     avoid: generateHealthAvoid(meaning, isReversed)
                 },
                 money: {
                     title: '💰 금전 전망',
-                    focus: meaning,
+                    focus: generateMoneyFocus(meaning, isReversed),
                     action: generateMoneyAction(meaning, isReversed),
                     avoid: generateMoneyAvoid(meaning, isReversed)
                 }
             };
             
             return purposeInsights[purposeType] || purposeInsights.daily;
+        }
+        
+        // === 목적별 핵심 메시지 생성 함수들 ===
+        function generateLoveFocus(meaning, isReversed) {
+            if (isReversed) {
+                return '현재 연애 상황에서 소통과 이해가 부족한 상태입니다. 진정한 감정을 표현하는 것이 중요합니다.';
+            }
+            return '사랑과 관계에서 진정성과 소통이 핵심입니다. 상대방을 이해하고 조화로운 관계를 만들어가세요.';
+        }
+        
+        function generateCareerFocus(meaning, isReversed) {
+            if (isReversed) {
+                return '업무에서 새로운 접근이 필요한 시기입니다. 기존 방식에 얽매이지 말고 혁신을 추구하세요.';
+            }
+            return '직장에서 전문성과 리더십을 발휘할 수 있는 기회입니다. 자신의 능력을 믿고 도전하세요.';
+        }
+        
+        function generateDailyFocus(meaning, isReversed) {
+            if (isReversed) {
+                return '오늘은 내면의 성찰과 관찰이 중요한 날입니다. 서두르지 말고 상황을 차분히 파악하세요.';
+            }
+            return '오늘은 활발한 활동과 새로운 경험을 추구하기 좋은 날입니다. 에너지를 활용하여 성장하세요.';
+        }
+        
+        function generateHealthFocus(meaning, isReversed) {
+            if (isReversed) {
+                return '건강 관리에서 균형과 휴식이 중요한 시기입니다. 스트레스를 줄이고 충분한 휴식을 취하세요.';
+            }
+            return '건강한 라이프스타일을 유지하기 좋은 시기입니다. 활발한 활동과 규칙적인 생활을 추구하세요.';
+        }
+        
+        function generateMoneyFocus(meaning, isReversed) {
+            if (isReversed) {
+                return '재정 관리에서 신중함이 필요한 시기입니다. 현재 상황을 점검하고 안정적인 계획을 세우세요.';
+            }
+            return '재정적 성장과 새로운 기회를 찾기 좋은 시기입니다. 적극적으로 투자 기회를 탐색하세요.';
         }
         
         // === 목적별 액션 생성 함수들 ===
