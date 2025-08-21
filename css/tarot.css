@@ -45,43 +45,42 @@
     font-size: 0.9rem;
 }
 
-/* 타로 덱 */
+/* 타로 덱 - 랜덤 선택 */
 .tarot-deck {
     margin-bottom: 2rem;
 }
 
-.deck-filter {
-    margin-bottom: 1rem;
+.random-selection-area {
+    text-align: center;
+    margin: 2rem 0;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    border: 2px dashed rgba(102, 126, 234, 0.3);
 }
 
-.filter-buttons {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-    margin-bottom: 1rem;
+.random-select-btn {
+    font-size: 1.2rem;
+    padding: 15px 30px;
+    margin-right: 1rem;
+    min-width: 200px;
 }
 
-.filter-btn {
-    background: rgba(255, 255, 255, 0.8);
-    border: 2px solid #667eea;
-    color: #667eea;
-    padding: 8px 16px;
-    border-radius: 20px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    font-weight: 600;
-    transition: all 0.3s ease;
+.random-select-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
 }
 
-.filter-btn.active {
-    background: #667eea;
-    color: white;
+.reset-btn {
+    font-size: 1rem;
+    padding: 12px 24px;
 }
 
-.filter-btn:hover {
-    background: #667eea;
-    color: white;
-    transform: translateY(-1px);
+.reset-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
 }
 
 /* 타로 카드 관련 스타일 */
@@ -235,40 +234,120 @@
 
 /* 선택된 카드 표시 */
 .selected-cards-display {
-    background: rgba(255, 255, 255, 0.05);
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.95);
     border-radius: 15px;
-    padding: 20px;
-    margin-bottom: 20px;
+    border: 2px solid #667eea;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
 }
 
-.selected-cards-grid {
+.selected-cards-display h3 {
+    text-align: center;
+    color: #2d3748;
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+    border-bottom: 2px solid #667eea;
+    padding-bottom: 0.5rem;
+}
+
+.selected-cards-list {
     display: flex;
-    gap: 15px;
-    flex-wrap: wrap;
-    justify-content: center;
+    flex-direction: column;
+    gap: 1rem;
 }
 
 .selected-card-item {
+    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 2px solid #667eea;
     text-align: center;
-    padding: 15px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    position: relative;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.selected-card-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.selected-card-item .card-number {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #667eea;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.selected-card-item .card-name {
+    font-weight: 600;
+    font-size: 1.2rem;
+    color: #2d3748;
+    margin-bottom: 0.5rem;
+}
+
+.selected-card-item .card-direction {
+    font-size: 0.9rem;
+    color: #718096;
+    margin-bottom: 0.3rem;
+    font-style: italic;
+}
+
+.selected-card-item .card-type {
+    font-size: 0.8rem;
+    color: #a0aec0;
+    margin-bottom: 1rem;
 }
 
 .remove-btn {
-    background: #e74c3c;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #e53e3e;
     color: white;
     border: none;
-    padding: 5px 10px;
-    border-radius: 5px;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
     cursor: pointer;
-    font-size: 12px;
-    margin-top: 10px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(229, 62, 62, 0.3);
 }
 
 .remove-btn:hover {
-    background: #c0392b;
+    background: #c53030;
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(229, 62, 62, 0.4);
+}
+
+/* 선택 완료 버튼 */
+.selection-complete {
+    text-align: center;
+    margin-top: 2rem;
+    padding: 2rem;
+    background: rgba(102, 126, 234, 0.1);
+    border-radius: 15px;
+    border: 2px solid #667eea;
+}
+
+.selection-complete .btn {
+    font-size: 1.3rem;
+    padding: 18px 36px;
+    min-width: 250px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+.selection-complete .btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 35px rgba(102, 126, 234, 0.5);
 }
 
 /* 컨트롤 스타일 */
