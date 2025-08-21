@@ -162,6 +162,12 @@ const ReadingResult = {
         },
         
         getPurposeSpecificInfo() {
+            // 새로운 specialInsight 필드 우선 사용
+            if (this.result.specialInsight) {
+                return this.result.specialInsight;
+            }
+            
+            // 기존 방식 fallback
             const purpose = this.result.purpose;
             const combination = this.result.combination;
             
