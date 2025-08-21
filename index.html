@@ -451,12 +451,28 @@
             mounted() {
                 console.log('=== ReadingResult 컴포넌트 마운트됨 ===');
                 console.log('readingData props:', this.readingData);
-                console.log('readingData 타입:', typeof this.readingData);
+                console.log('readingData props 타입:', typeof this.readingData);
+                console.log('readingData props 존재 여부:', !!this.readingData);
+                
                 if (this.readingData) {
+                    console.log('readingData 전체 내용:', JSON.stringify(this.readingData, null, 2));
                     console.log('readingData.cards:', this.readingData.cards);
+                    console.log('readingData.cards 타입:', typeof this.readingData.cards);
                     console.log('readingData.cards 길이:', this.readingData.cards ? this.readingData.cards.length : 'undefined');
+                    console.log('readingData.cards 내용:', JSON.stringify(this.readingData.cards, null, 2));
                     console.log('readingData.purpose:', this.readingData.purpose);
+                    console.log('readingData.purpose 타입:', typeof this.readingData.purpose);
                     console.log('readingData.cardMeanings:', this.readingData.cardMeanings);
+                    console.log('readingData.cardMeanings 타입:', typeof this.readingData.cardMeanings);
+                    console.log('readingData.cardMeanings 길이:', this.readingData.cardMeanings ? this.readingData.cardMeanings.length : 'undefined');
+                    console.log('readingData.cardMeanings 내용:', JSON.stringify(this.readingData.cardMeanings, null, 2));
+                    console.log('readingData.combination:', this.readingData.combination);
+                    console.log('readingData.combination 타입:', typeof this.readingData.combination);
+                    console.log('readingData.combination 내용:', JSON.stringify(this.readingData.combination, null, 2));
+                    console.log('readingData.timestamp:', this.readingData.timestamp);
+                    console.log('readingData.timestamp 타입:', typeof this.readingData.timestamp);
+                } else {
+                    console.warn('readingData가 null 또는 undefined입니다!');
                 }
                 console.log('=== ReadingResult 마운트 완료 ===');
             },
@@ -464,18 +480,29 @@
                 <div class="section reading-result">
                     <h2>✨ 타로 리딩 결과</h2>
                     
-                    <!-- 디버깅 정보 -->
-                    <div style="background: #f0f0f0; padding: 10px; margin: 10px; border: 1px solid #ccc; font-family: monospace; font-size: 12px;">
-                        <p><strong>ReadingResult 디버깅 정보:</strong></p>
-                        <p>readingData props 타입: {{ typeof readingData }}</p>
-                        <p>readingData 존재 여부: {{ readingData ? '있음' : '없음' }}</p>
-                        <p v-if="readingData">readingData.cards 타입: {{ typeof readingData.cards }}</p>
-                        <p v-if="readingData">readingData.cards 길이: {{ readingData.cards ? readingData.cards.length : 'undefined' }}</p>
-                        <p v-if="readingData">readingData.cards 내용: {{ JSON.stringify(readingData.cards, null, 2) }}</p>
-                        <p v-if="readingData">readingData.purpose: {{ readingData.purpose }}</p>
-                        <p v-if="readingData">readingData.cardMeanings 길이: {{ readingData.cardMeanings ? readingData.cardMeanings.length : 'undefined' }}</p>
-                        <p v-if="readingData">readingData.combination: {{ JSON.stringify(readingData.combination, null, 2) }}</p>
-                    </div>
+                                         <!-- 디버깅 정보 -->
+                     <div style="background: #f0f0f0; padding: 10px; margin: 10px; border: 1px solid #ccc; font-family: monospace; font-size: 12px;">
+                         <p><strong>ReadingResult 디버깅 정보:</strong></p>
+                         <p>readingData props 타입: {{ typeof readingData }}</p>
+                         <p>readingData 존재 여부: {{ readingData ? '있음' : '없음' }}</p>
+                         <p>readingData 값: {{ readingData }}</p>
+                         <p v-if="readingData">readingData 전체 내용: {{ JSON.stringify(readingData, null, 2) }}</p>
+                         <p v-if="readingData">readingData.cards 타입: {{ typeof readingData.cards }}</p>
+                         <p v-if="readingData">readingData.cards 존재 여부: {{ readingData.cards ? '있음' : '없음' }}</p>
+                         <p v-if="readingData">readingData.cards 길이: {{ readingData.cards ? readingData.cards.length : 'undefined' }}</p>
+                         <p v-if="readingData">readingData.cards 내용: {{ JSON.stringify(readingData.cards, null, 2) }}</p>
+                         <p v-if="readingData">readingData.purpose: {{ readingData.purpose }}</p>
+                         <p v-if="readingData">readingData.purpose 타입: {{ typeof readingData.purpose }}</p>
+                         <p v-if="readingData">readingData.cardMeanings 타입: {{ typeof readingData.cardMeanings }}</p>
+                         <p v-if="readingData">readingData.cardMeanings 존재 여부: {{ readingData.cardMeanings ? '있음' : '없음' }}</p>
+                         <p v-if="readingData">readingData.cardMeanings 길이: {{ readingData.cardMeanings ? readingData.cardMeanings.length : 'undefined' }}</p>
+                         <p v-if="readingData">readingData.cardMeanings 내용: {{ JSON.stringify(readingData.cardMeanings, null, 2) }}</p>
+                         <p v-if="readingData">readingData.combination 타입: {{ typeof readingData.combination }}</p>
+                         <p v-if="readingData">readingData.combination 존재 여부: {{ readingData.combination ? '있음' : '없음' }}</p>
+                         <p v-if="readingData">readingData.combination 내용: {{ JSON.stringify(readingData.combination, null, 2) }}</p>
+                         <p v-if="readingData">readingData.timestamp: {{ readingData.timestamp }}</p>
+                         <p v-if="readingData">readingData.timestamp 타입: {{ typeof readingData.timestamp }}</p>
+                     </div>
                     
                     <div v-if="readingData" class="result-content">
                         <div class="result-summary">
@@ -676,6 +703,9 @@
                      console.log('cards 길이:', cards ? cards.length : 'undefined');
                      console.log('cards 내용:', JSON.stringify(cards, null, 2));
                      
+                     console.log('currentStep 변경 전:', this.currentStep);
+                     console.log('selectedCards 설정 전:', this.selectedCards);
+                     
                      // 데이터 설정과 단계 변경을 동시에 실행
                      this.selectedCards = cards;
                      this.currentStep = 'spread';
@@ -683,7 +713,7 @@
                      console.log('this.selectedCards 설정됨:', this.selectedCards);
                      console.log('this.selectedCards 타입:', typeof this.selectedCards);
                      console.log('this.selectedCards 길이:', this.selectedCards ? this.selectedCards.length : 'undefined');
-                     console.log('currentStep을 spread로 변경');
+                     console.log('currentStep 변경 후:', this.currentStep);
                      console.log('=== onCardSelectionComplete 완료 ===');
                  },
                 
@@ -693,20 +723,35 @@
                         
                         console.log('=== onStartReading 호출됨 ===');
                         console.log('this.selectedCards:', this.selectedCards);
+                        console.log('this.selectedCards 타입:', typeof this.selectedCards);
                         console.log('this.selectedCards 길이:', this.selectedCards ? this.selectedCards.length : 'undefined');
+                        console.log('this.selectedCards 내용:', JSON.stringify(this.selectedCards, null, 2));
                         console.log('선택된 목적:', this.selectedPurpose);
+                        console.log('선택된 목적 타입:', typeof this.selectedPurpose);
                         
                         // this.selectedCards 직접 사용
                         if (!this.selectedCards || !Array.isArray(this.selectedCards) || this.selectedCards.length === 0) {
+                            console.error('선택된 카드 검증 실패!');
+                            console.error('selectedCards 존재 여부:', !!this.selectedCards);
+                            console.error('selectedCards 배열 여부:', Array.isArray(this.selectedCards));
+                            console.error('selectedCards 길이:', this.selectedCards ? this.selectedCards.length : 'undefined');
                             throw new Error('선택된 카드가 없습니다. 카드를 다시 선택해주세요.');
                         }
                         
                         const selectedCards = this.selectedCards;
                         console.log('사용할 카드들:', selectedCards);
+                        console.log('사용할 카드들 타입:', typeof selectedCards);
+                        console.log('사용할 카드들 길이:', selectedCards.length);
                         
                         // 선택된 카드들의 실제 의미를 분석
                         const cardMeanings = selectedCards.map((card, index) => {
-                            console.log(`카드 ${index + 1}:`, card);
+                            console.log(`=== 카드 ${index + 1} 분석 시작 ===`);
+                            console.log(`카드 ${index + 1} 원본 데이터:`, card);
+                            console.log(`카드 ${index + 1} name:`, card.name);
+                            console.log(`카드 ${index + 1} reversed:`, card.reversed);
+                            console.log(`카드 ${index + 1} upright_meaning:`, card.upright_meaning);
+                            console.log(`카드 ${index + 1} reversed_meaning:`, card.reversed_meaning);
+                            console.log(`카드 ${index + 1} keywords:`, card.keywords);
                             
                             const meaning = {
                                 name: card.name,
@@ -716,19 +761,26 @@
                                 isReversed: card.reversed
                             };
                             
-                            console.log(`카드 ${index + 1} 의미:`, meaning);
+                            console.log(`카드 ${index + 1} 생성된 의미:`, meaning);
+                            console.log(`=== 카드 ${index + 1} 분석 완료 ===`);
                             return meaning;
                         });
                         
                         console.log('카드 의미 분석 완료:', cardMeanings);
+                        console.log('카드 의미 분석 타입:', typeof cardMeanings);
+                        console.log('카드 의미 분석 길이:', cardMeanings.length);
                         
                         // 전체적인 해석 생성
+                        console.log('=== 해석 생성 시작 ===');
                         const overallMeaning = this.generateOverallMeaning(cardMeanings, this.selectedPurpose);
                         const advice = this.generateAdvice(cardMeanings, this.selectedPurpose);
                         
-                        console.log('생성된 해석:', { overallMeaning, advice });
+                        console.log('생성된 전체 의미:', overallMeaning);
+                        console.log('생성된 조언:', advice);
+                        console.log('=== 해석 생성 완료 ===');
                         
                         // 리딩 결과 생성
+                        console.log('=== 리딩 데이터 생성 시작 ===');
                         this.readingData = {
                             cards: selectedCards,
                             purpose: this.selectedPurpose,
@@ -741,20 +793,33 @@
                         };
                         
                         console.log('리딩 데이터 생성 완료:', this.readingData);
+                        console.log('readingData 타입:', typeof this.readingData);
                         console.log('readingData.cards:', this.readingData.cards);
+                        console.log('readingData.cards 타입:', typeof this.readingData.cards);
                         console.log('readingData.cards 길이:', this.readingData.cards ? this.readingData.cards.length : 'undefined');
                         console.log('readingData.purpose:', this.readingData.purpose);
+                        console.log('readingData.purpose 타입:', typeof this.readingData.purpose);
+                        console.log('readingData.cardMeanings:', this.readingData.cardMeanings);
+                        console.log('readingData.cardMeanings 타입:', typeof this.readingData.cardMeanings);
                         console.log('readingData.cardMeanings 길이:', this.readingData.cardMeanings ? this.readingData.cardMeanings.length : 'undefined');
+                        console.log('readingData.combination:', this.readingData.combination);
+                        console.log('readingData.combination 타입:', typeof this.readingData.combination);
+                        console.log('=== 리딩 데이터 생성 완료 ===');
+                        
+                        console.log('currentStep을 result로 변경하기 전:', this.currentStep);
+                        this.currentStep = 'result';
+                        console.log('currentStep을 result로 변경 후:', this.currentStep);
                         console.log('=== onStartReading 완료 ===');
                         
-                        this.currentStep = 'result';
                     } catch (error) {
                         console.error('리딩 생성 실패:', error);
                         console.error('오류 스택:', error.stack);
                         console.error('오류 메시지:', error.message);
+                        console.error('오류 이름:', error.name);
                         alert(`리딩을 생성하는 중 오류가 발생했습니다: ${error.message}`);
                     } finally {
                         this.isLoading = false;
+                        console.log('onStartReading finally 블록 실행됨');
                     }
                 },
                 
