@@ -1183,7 +1183,6 @@
             
             // 해석 결과 표시
             document.getElementById('overallMeaning').innerHTML = `
-                ${numerologicalInfo}
                 <div class="reading-sections">
                     <div class="reading-section">
                         <h4>📖 과거</h4>
@@ -1217,13 +1216,10 @@
             cardsList.innerHTML = '';
             
             readingData.cardReadings.forEach((cardReading, index) => {
-                const numerologicalBadge = cardReading.numerologicalInsight ? 
-                    '<span class="numerological-badge">🔢 수치학적 해석</span>' : '';
-                
                 const cardDiv = document.createElement('div');
                 cardDiv.className = 'card-detail';
                 cardDiv.innerHTML = `
-                    <h4>${cardReading.position}: ${cardReading.name} ${numerologicalBadge}</h4>
+                    <h4>${cardReading.position}: ${cardReading.name}</h4>
                     <p class="card-direction">${cardReading.isReversed ? '역방향' : '정방향'}</p>
                     <p class="card-meaning">${cardReading.meaning}</p>
                     <p class="card-keywords">키워드: ${cardReading.keywords}</p>
@@ -1854,31 +1850,8 @@
             const cardReading = readingData.cardReading;
             const insight = readingData.singleInsight;
             
-            // 수치학적 정보 표시
-            let numerologicalInfo = '';
-            if (readingData.numerologicalData) {
-                const birthDateStr = readingData.numerologicalData.birthDate.toLocaleDateString('ko-KR', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                });
-                
-                numerologicalInfo = `
-                    <div class="numerological-info">
-                        <h4>🔢 수치학적 개인화 정보</h4>
-                        <p><strong>생년월일:</strong> ${birthDateStr}</p>
-                        <p><strong>생명수:</strong> ${readingData.numerologicalData.lifePathNumber}</p>
-                        <p><strong>출생 계절:</strong> ${readingData.numerologicalData.birthSeason.emoji} ${readingData.numerologicalData.birthSeason.name}</p>
-                        <p class="numerological-note">💡 위의 해석은 수치학적 관점을 바탕으로 개인화되었습니다.</p>
-                    </div>
-                `;
-            }
-            
             // 카드 정보 표시
-            const numerologicalBadge = readingData.numerologicalData ? 
-                ' <span class="numerological-badge">🔢 수치학적 해석</span>' : '';
-            
-            document.getElementById('singleResultCardName').textContent = card.name + numerologicalBadge;
+            document.getElementById('singleResultCardName').textContent = card.name;
             document.getElementById('singleResultCardType').textContent = 
                 card.major_minor === 'major' ? '메이저 아르카나' : '마이너 아르카나';
             document.getElementById('singleResultCardDirection').textContent = 
@@ -1924,7 +1897,6 @@
             // 목적별 특화 정보
             document.getElementById('singleSpecialTitle').textContent = insight.title;
             document.getElementById('singleSpecialInsight').innerHTML = `
-                ${numerologicalInfo}
                 <p><strong>${insight.focus}:</strong> ${meaning}</p>
                 <p><strong>${insight.action}:</strong> ${cardReading.advice}</p>
                 <p><strong>${insight.avoid}:</strong> ${card.reversed ? '현재 상황을 너무 부정적으로 보지 마세요.' : '과도한 자신감은 금물입니다.'}</p>
