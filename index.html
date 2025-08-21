@@ -1663,40 +1663,112 @@
         function generateSingleReadingInsight(cardReading, purposeType, isReversed) {
             const meaning = isReversed ? cardReading.reversed_meaning : cardReading.upright_meaning;
             
-            const insights = {
+            // 목적별 특화 해석 생성
+            const purposeInsights = {
                 love: {
                     title: '💕 연애 특별 조언',
-                    focus: '오늘 연애에서 가장 중요한 것',
-                    action: '취해야 할 행동',
-                    avoid: '피해야 할 것'
+                    focus: meaning,
+                    action: generateLoveAction(meaning, isReversed),
+                    avoid: generateLoveAvoid(meaning, isReversed)
                 },
                 career: {
                     title: '💼 직장 가이드',
-                    focus: '업무에서 집중할 점',
-                    action: '오늘의 업무 전략', 
-                    avoid: '주의해야 할 상황'
+                    focus: meaning,
+                    action: generateCareerAction(meaning, isReversed),
+                    avoid: generateCareerAvoid(meaning, isReversed)
                 },
                 daily: {
                     title: '☀️ 오늘의 집중점',
-                    focus: '오늘의 핵심 에너지',
-                    action: '오늘 해야 할 일',
-                    avoid: '오늘 피해야 할 것'
+                    focus: meaning,
+                    action: generateDailyAction(meaning, isReversed),
+                    avoid: generateDailyAvoid(meaning, isReversed)
                 },
                 health: {
                     title: '🌿 건강 주의사항',
-                    focus: '건강 관리 포인트',
-                    action: '건강을 위한 행동',
-                    avoid: '건강에 해로운 것'
+                    focus: meaning,
+                    action: generateHealthAction(meaning, isReversed),
+                    avoid: generateHealthAvoid(meaning, isReversed)
                 },
                 money: {
                     title: '💰 금전 전망',
-                    focus: '재정 관리 포인트',
-                    action: '재정을 위한 행동',
-                    avoid: '재정적 위험 요소'
+                    focus: meaning,
+                    action: generateMoneyAction(meaning, isReversed),
+                    avoid: generateMoneyAvoid(meaning, isReversed)
                 }
             };
             
-            return insights[purposeType] || insights.daily;
+            return purposeInsights[purposeType] || purposeInsights.daily;
+        }
+        
+        // === 목적별 액션 생성 함수들 ===
+        function generateLoveAction(meaning, isReversed) {
+            if (isReversed) {
+                return '상대방과의 소통을 개선하고 진정한 감정을 표현하세요.';
+            }
+            return '사랑하는 마음을 솔직하게 표현하고 상대방을 이해하려 노력하세요.';
+        }
+        
+        function generateLoveAvoid(meaning, isReversed) {
+            if (isReversed) {
+                return '감정을 숨기거나 상대방을 의심하지 마세요.';
+            }
+            return '과도한 기대나 소유욕을 버리고 자유로운 사랑을 추구하세요.';
+        }
+        
+        function generateCareerAction(meaning, isReversed) {
+            if (isReversed) {
+                return '현재 상황을 객관적으로 분석하고 새로운 접근 방법을 모색하세요.';
+            }
+            return '자신의 능력을 믿고 적극적으로 업무에 임하세요.';
+        }
+        
+        function generateCareerAvoid(meaning, isReversed) {
+            if (isReversed) {
+                return '성급한 결정이나 포기를 하지 마세요.';
+            }
+            return '과도한 자신감이나 독단적인 행동을 피하세요.';
+        }
+        
+        function generateDailyAction(meaning, isReversed) {
+            if (isReversed) {
+                return '오늘은 차분히 상황을 관찰하고 내면의 목소리를 들어보세요. 창조적인 활동보다는 성찰의 시간을 가지세요.';
+            }
+            return '오늘의 에너지를 활용하여 새로운 경험을 시도해보세요. 창조적이고 활발한 활동을 추구하세요.';
+        }
+        
+        function generateDailyAvoid(meaning, isReversed) {
+            if (isReversed) {
+                return '부정적인 생각이나 성급한 행동을 피하세요.';
+            }
+            return '과도한 활동이나 무리한 계획을 세우지 마세요.';
+        }
+        
+        function generateHealthAction(meaning, isReversed) {
+            if (isReversed) {
+                return '스트레스를 줄이고 충분한 휴식을 취하세요.';
+            }
+            return '활발한 활동과 건강한 습관을 유지하세요.';
+        }
+        
+        function generateHealthAvoid(meaning, isReversed) {
+            if (isReversed) {
+                return '과도한 운동이나 스트레스가 많은 활동을 피하세요.';
+            }
+            return '무리한 운동이나 불규칙한 생활을 하지 마세요.';
+        }
+        
+        function generateMoneyAction(meaning, isReversed) {
+            if (isReversed) {
+                return '재정 상태를 점검하고 신중한 투자 결정을 내리세요.';
+            }
+            return '새로운 투자 기회를 탐색하고 재정 계획을 세우세요.';
+        }
+        
+        function generateMoneyAvoid(meaning, isReversed) {
+            if (isReversed) {
+                return '성급한 투자나 과도한 지출을 피하세요.';
+            }
+            return '과도한 위험을 감수하거나 무계획한 지출을 하지 마세요.';
         }
 
         // === 한 장 리딩 결과 화면 업데이트 ===
@@ -1754,9 +1826,9 @@
             // 목적별 특화 정보
             document.getElementById('singleSpecialTitle').textContent = insight.title;
             document.getElementById('singleSpecialInsight').innerHTML = `
-                <p><strong>${insight.focus}:</strong> ${meaning}</p>
-                <p><strong>${insight.action}:</strong> ${cardReading.advice}</p>
-                <p><strong>${insight.avoid}:</strong> ${card.reversed ? '현재 상황을 너무 부정적으로 보지 마세요.' : '과도한 자신감은 금물입니다.'}</p>
+                <p><strong>핵심 메시지:</strong> ${insight.focus}</p>
+                <p><strong>오늘의 할일:</strong> ${insight.action}</p>
+                <p><strong>주의사항:</strong> ${insight.avoid}</p>
             `;
         }
 
