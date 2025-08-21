@@ -27,12 +27,46 @@ class TarotService {
             
             if (error) throw error;
             
-            // 그룹 정보 추가 (간단한 버전)
+            // 그룹 정보 추가
             const cardsWithGroups = data.map(card => {
+                let groupInfo = null;
+                let groupId = null;
+                
+                if (card.major_minor === 'major') {
+                    // 메이저 아르카나 그룹 찾기
+                    groupInfo = window.findCardGroup(card.id);
+                    if (groupInfo) {
+                        // 그룹명을 ID로 변환
+                        const groupNameToId = {
+                            'new_beginnings': 1,
+                            'relationships': 2,
+                            'transformation': 3,
+                            'material_world': 4,
+                            'spiritual_journey': 5,
+                            'completion': 6
+                        };
+                        groupId = groupNameToId[groupInfo.name];
+                    }
+                } else {
+                    // 마이너 아르카나 수트 그룹
+                    groupInfo = window.findSuitGroup(card.suit);
+                    if (groupInfo) {
+                        // 수트를 ID로 변환
+                        const suitToId = {
+                            'wands': 7,
+                            'cups': 8,
+                            'swords': 9,
+                            'pentacles': 10
+                        };
+                        groupId = suitToId[card.suit];
+                    }
+                }
+                
                 return {
                     ...card,
-                    group: card.major_minor === 'major' ? 'major' : 'minor',
-                    suitGroup: card.suit || null
+                    groupId: groupId,
+                    groupInfo: groupInfo,
+                    displayName: window.formatCardName ? window.formatCardName(card) : card.name
                 };
             });
             
@@ -114,11 +148,36 @@ class TarotService {
                 .single();
             
             if (error) throw error;
-            return data;
+            
+            // 목적별 특화 정보 추가
+            const result = {
+                ...data,
+                specialInsight: this.getSpecialInsight(data, purposeType)
+            };
+            
+            return result;
         } catch (error) {
             console.error('목적별 조합 해석 조회 실패:', error);
             // 기본 조합 해석 반환
             return this.getDefaultCombinationReading(group1Id, group2Id, group3Id, reversed1, reversed2, reversed3, purposeType);
+        }
+    }
+
+    // 목적별 특화 정보 추출
+    getSpecialInsight(combinationData, purposeType) {
+        switch (purposeType) {
+            case 'love':
+                return combinationData.love_insights;
+            case 'career':
+                return combinationData.career_guidance;
+            case 'daily':
+                return combinationData.daily_focus;
+            case 'health':
+                return combinationData.health_notes;
+            case 'money':
+                return combinationData.money_outlook;
+            default:
+                return null;
         }
     }
 
