@@ -32,9 +32,72 @@
                     <button onclick="testConnection()" class="btn btn-primary">연결 확인</button>
                 </div>
 
+                <!-- 생년월일 입력 -->
+                <div id="birthDateInput" class="section birth-date-input">
+                    <h2>📅 생년월일을 입력해주세요</h2>
+                    <p class="text-center mb-4">더욱 개인화된 타로 리딩을 위해 생년월일을 입력해주세요</p>
+                    
+                    <div class="birth-date-form">
+                        <div class="form-group">
+                            <label for="birthYear">출생년도</label>
+                            <select id="birthYear" class="form-control" required>
+                                <option value="">년도 선택</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="birthMonth">출생월</label>
+                            <select id="birthMonth" class="form-control" required>
+                                <option value="">월 선택</option>
+                                <option value="1">1월</option>
+                                <option value="2">2월</option>
+                                <option value="3">3월</option>
+                                <option value="4">4월</option>
+                                <option value="5">5월</option>
+                                <option value="6">6월</option>
+                                <option value="7">7월</option>
+                                <option value="8">8월</option>
+                                <option value="9">9월</option>
+                                <option value="10">10월</option>
+                                <option value="11">11월</option>
+                                <option value="12">12월</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="birthDay">출생일</label>
+                            <select id="birthDay" class="form-control" required>
+                                <option value="">일 선택</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button id="confirmBirthDate" class="btn btn-primary" onclick="confirmBirthDate()">
+                                ✅ 생년월일 확인
+                            </button>
+                            <button class="btn btn-secondary" onclick="skipBirthDate()">
+                                ⏭️ 건너뛰기
+                            </button>
+                        </div>
+                        
+                        <div class="birth-date-info">
+                            <p class="info-text">
+                                💡 생년월일을 입력하시면 수치학적 관점을 바탕으로 더욱 개인화된 타로 해석을 제공해드립니다.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- 목적 선택 -->
-                <div id="purpose" class="section purpose-selector">
+                <div id="purpose" class="section purpose-selector" style="display: none;">
                     <h2>🎯 리딩 목적을 선택하세요</h2>
+                    <div class="birth-date-summary" id="birthDateSummary" style="display: none;">
+                        <p class="text-center mb-3">
+                            📅 <span id="displayBirthDate"></span> | 
+                            🔢 생명수: <span id="lifePathNumber"></span> | 
+                            🌸 <span id="birthSeason"></span>
+                        </p>
+                    </div>
                     <div class="purpose-grid">
                         <button class="purpose-card" onclick="selectPurpose('love')">
                             <div class="purpose-icon">💕</div>
@@ -335,7 +398,7 @@
 
     <script>
         // === 전역 변수들 ===
-        let currentStep = 'purpose';
+        let currentStep = 'birthDateInput';
         let selectedPurpose = null;
         let selectedReadingType = null; // 'single' 또는 'three'
         let selectedCards = [];
@@ -343,6 +406,9 @@
         let allCards = [];
         let readingData = null;
         let supabase = null;
+        let userBirthDate = null; // 사용자 생년월일
+        let lifePathNumber = null; // 생명수
+        let birthSeason = null; // 출생 계절
 
         // === Supabase 설정 ===
         const SUPABASE_URL = 'https://qcubdynkiawpcmsflxfu.supabase.co';
@@ -494,9 +560,136 @@
             }
         }
 
+        // === 생년월일 관련 함수들 ===
+        function initializeBirthDateForm() {
+            // 년도 옵션 생성 (1950년 ~ 현재)
+            const yearSelect = document.getElementById('birthYear');
+            const currentYear = new Date().getFullYear();
+            
+            for (let year = currentYear; year >= 1950; year--) {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year + '년';
+                yearSelect.appendChild(option);
+            }
+            
+            // 월 선택 시 일 옵션 업데이트
+            document.getElementById('birthMonth').addEventListener('change', updateDayOptions);
+            document.getElementById('birthYear').addEventListener('change', updateDayOptions);
+        }
+        
+        function updateDayOptions() {
+            const year = document.getElementById('birthYear').value;
+            const month = document.getElementById('birthMonth').value;
+            const daySelect = document.getElementById('birthDay');
+            
+            // 기존 옵션 제거
+            daySelect.innerHTML = '<option value="">일 선택</option>';
+            
+            if (year && month) {
+                const daysInMonth = new Date(year, month, 0).getDate();
+                
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const option = document.createElement('option');
+                    option.value = day;
+                    option.textContent = day + '일';
+                    daySelect.appendChild(option);
+                }
+            }
+        }
+        
+        function confirmBirthDate() {
+            const year = document.getElementById('birthYear').value;
+            const month = document.getElementById('birthMonth').value;
+            const day = document.getElementById('birthDay').value;
+            
+            if (!year || !month || !day) {
+                alert('생년월일을 모두 선택해주세요.');
+                return;
+            }
+            
+            // 생년월일 저장
+            userBirthDate = new Date(year, month - 1, day);
+            
+            // 생명수 계산
+            lifePathNumber = calculateLifePathNumber(userBirthDate);
+            
+            // 출생 계절 계산
+            birthSeason = getBirthSeason(userBirthDate);
+            
+            console.log('생년월일 확인:', {
+                birthDate: userBirthDate,
+                lifePathNumber: lifePathNumber,
+                birthSeason: birthSeason
+            });
+            
+            // 목적 선택 화면으로 이동
+            showSection('purpose');
+            
+            // 생년월일 요약 표시
+            displayBirthDateSummary();
+        }
+        
+        function skipBirthDate() {
+            console.log('생년월일 입력 건너뛰기');
+            showSection('purpose');
+        }
+        
+        function calculateLifePathNumber(birthDate) {
+            const year = birthDate.getFullYear();
+            const month = birthDate.getMonth() + 1;
+            const day = birthDate.getDate();
+            
+            // 각 부분을 한 자리 숫자로 줄이기
+            const yearSum = reduceToSingleDigit(year);
+            const monthSum = reduceToSingleDigit(month);
+            const daySum = reduceToSingleDigit(day);
+            
+            // 최종 생명수 계산
+            const lifePathNumber = reduceToSingleDigit(yearSum + monthSum + daySum);
+            
+            return lifePathNumber;
+        }
+        
+        function reduceToSingleDigit(number) {
+            while (number > 9) {
+                number = number.toString().split('').reduce((sum, digit) => sum + parseInt(digit), 0);
+            }
+            return number;
+        }
+        
+        function getBirthSeason(birthDate) {
+            const month = birthDate.getMonth() + 1;
+            
+            if (month >= 3 && month <= 5) return { name: '봄', emoji: '🌸' };
+            if (month >= 6 && month <= 8) return { name: '여름', emoji: '☀️' };
+            if (month >= 9 && month <= 11) return { name: '가을', emoji: '🍂' };
+            return { name: '겨울', emoji: '❄️' };
+        }
+        
+        function displayBirthDateSummary() {
+            if (userBirthDate && lifePathNumber && birthSeason) {
+                const birthDateStr = userBirthDate.toLocaleDateString('ko-KR', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                
+                document.getElementById('displayBirthDate').textContent = birthDateStr;
+                document.getElementById('lifePathNumber').textContent = lifePathNumber;
+                document.getElementById('birthSeason').textContent = `${birthSeason.emoji} ${birthSeason.name}`;
+                
+                document.getElementById('birthDateSummary').style.display = 'block';
+            }
+        }
+
         // === 초기화 ===
         document.addEventListener('DOMContentLoaded', async function() {
             console.log('=== 애플리케이션 시작 ===');
+            
+            // 생년월일 폼 초기화
+            initializeBirthDateForm();
+            
             await initializeApp();
         });
 
@@ -516,7 +709,7 @@
                 if (cards && cards.length > 0) {
                     allCards = cards;
                     console.log('카드 로드 완료:', allCards.length, '장');
-                    showSection('purpose');
+                    showSection('birthDateInput');
                 } else {
                     throw new Error('카드 데이터를 불러올 수 없습니다.');
                 }
@@ -533,7 +726,7 @@
             console.log('섹션 변경:', currentStep, '→', sectionName);
             
             // 모든 섹션 숨기기
-            const sections = ['loading', 'setup', 'purpose', 'readingType', 'singleDeck', 'deck', 'spread', 'singleResult', 'result'];
+            const sections = ['loading', 'setup', 'birthDateInput', 'purpose', 'readingType', 'singleDeck', 'deck', 'spread', 'singleResult', 'result'];
             sections.forEach(section => {
                 const element = document.getElementById(section);
                 if (element) {
@@ -768,6 +961,9 @@
             console.log('=== 리딩 시작 ===');
             console.log('선택된 카드들:', selectedCards);
             console.log('선택된 목적:', selectedPurpose);
+            console.log('사용자 생년월일:', userBirthDate);
+            console.log('생명수:', lifePathNumber);
+            console.log('출생 계절:', birthSeason);
             
             try {
                 showLoading(true);
@@ -816,13 +1012,33 @@
                             
                             if (error) throw error;
                             
+                            // 수치학적 개인화 적용
+                            let personalizedMeaning = card.reversed ? data.reversed_meaning : data.upright_meaning;
+                            let personalizedAdvice = data.advice;
+                            
+                            if (userBirthDate && lifePathNumber) {
+                                const numerologicalInsight = applyNumerologicalInsight(
+                                    card, 
+                                    selectedPurpose, 
+                                    lifePathNumber, 
+                                    birthSeason,
+                                    card.reversed
+                                );
+                                
+                                if (numerologicalInsight) {
+                                    personalizedMeaning = numerologicalInsight.meaning;
+                                    personalizedAdvice = numerologicalInsight.advice;
+                                }
+                            }
+                            
                             return {
                                 name: card.name,
                                 position: ['과거', '현재', '미래'][cardsWithGroups.indexOf(card)],
-                                meaning: card.reversed ? data.reversed_meaning : data.upright_meaning,
+                                meaning: personalizedMeaning,
                                 keywords: data.keywords,
-                                advice: data.advice,
-                                isReversed: card.reversed
+                                advice: personalizedAdvice,
+                                isReversed: card.reversed,
+                                numerologicalInsight: userBirthDate ? true : false
                             };
                         } catch (error) {
                             console.error('개별 카드 해석 조회 실패:', error);
@@ -833,7 +1049,8 @@
                                 meaning: card.reversed ? card.reversed_meaning : card.upright_meaning,
                                 keywords: card.keywords,
                                 advice: '현재 상황을 잘 관찰하고 신중하게 판단하세요.',
-                                isReversed: card.reversed
+                                isReversed: card.reversed,
+                                numerologicalInsight: false
                             };
                         }
                     })
@@ -871,6 +1088,21 @@
                     };
                 }
                 
+                // 수치학적 조합 해석 적용
+                if (userBirthDate && lifePathNumber) {
+                    const numerologicalCombination = applyNumerologicalCombination(
+                        combinationReading,
+                        selectedPurpose,
+                        lifePathNumber,
+                        birthSeason,
+                        cardReadings
+                    );
+                    
+                    if (numerologicalCombination) {
+                        combinationReading = numerologicalCombination;
+                    }
+                }
+                
                 // 목적별 특화 정보 추출
                 const specialInsight = getSpecialInsight(combinationReading, selectedPurpose);
                 
@@ -881,7 +1113,12 @@
                     cardReadings: cardReadings,
                     combination: combinationReading,
                     specialInsight: specialInsight,
-                    timestamp: new Date()
+                    timestamp: new Date(),
+                    numerologicalData: userBirthDate ? {
+                        birthDate: userBirthDate,
+                        lifePathNumber: lifePathNumber,
+                        birthSeason: birthSeason
+                    } : null
                 };
                 
                 console.log('리딩 데이터 생성 완료:', readingData);
@@ -924,8 +1161,29 @@
             document.getElementById('resultDebugPurpose').textContent = selectedPurpose || '없음';
             document.getElementById('resultDebugMeanings').textContent = readingData.cardReadings.length;
             
+            // 수치학적 정보 표시
+            let numerologicalInfo = '';
+            if (readingData.numerologicalData) {
+                const birthDateStr = readingData.numerologicalData.birthDate.toLocaleDateString('ko-KR', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                
+                numerologicalInfo = `
+                    <div class="numerological-info">
+                        <h4>🔢 수치학적 개인화 정보</h4>
+                        <p><strong>생년월일:</strong> ${birthDateStr}</p>
+                        <p><strong>생명수:</strong> ${readingData.numerologicalData.lifePathNumber}</p>
+                        <p><strong>출생 계절:</strong> ${readingData.numerologicalData.birthSeason.emoji} ${readingData.numerologicalData.birthSeason.name}</p>
+                        <p class="numerological-note">💡 위의 해석은 수치학적 관점을 바탕으로 개인화되었습니다.</p>
+                    </div>
+                `;
+            }
+            
             // 해석 결과 표시
             document.getElementById('overallMeaning').innerHTML = `
+                ${numerologicalInfo}
                 <div class="reading-sections">
                     <div class="reading-section">
                         <h4>📖 과거</h4>
@@ -959,10 +1217,13 @@
             cardsList.innerHTML = '';
             
             readingData.cardReadings.forEach((cardReading, index) => {
+                const numerologicalBadge = cardReading.numerologicalInsight ? 
+                    '<span class="numerological-badge">🔢 수치학적 해석</span>' : '';
+                
                 const cardDiv = document.createElement('div');
                 cardDiv.className = 'card-detail';
                 cardDiv.innerHTML = `
-                    <h4>${cardReading.position}: ${cardReading.name}</h4>
+                    <h4>${cardReading.position}: ${cardReading.name} ${numerologicalBadge}</h4>
                     <p class="card-direction">${cardReading.isReversed ? '역방향' : '정방향'}</p>
                     <p class="card-meaning">${cardReading.meaning}</p>
                     <p class="card-keywords">키워드: ${cardReading.keywords}</p>
@@ -982,6 +1243,310 @@
                 'money': '💰 금전 전망'
             };
             return titles[purposeType] || '특별 조언';
+        }
+
+        // === 수치학적 개인화 함수들 ===
+        function applyNumerologicalInsight(card, purpose, lifePathNumber, birthSeason, isReversed) {
+            try {
+                // 생명수별 해석 변형
+                const lifePathInsights = {
+                    1: {
+                        love: {
+                            upright: "리더십과 독립성이 사랑에서 중요한 역할을 합니다. 솔직하고 직접적인 소통이 필요합니다.",
+                            reversed: "너무 독립적이어서 상대방과의 조화를 놓칠 수 있습니다. 타협의 중요성을 기억하세요."
+                        },
+                        career: {
+                            upright: "창의적이고 혁신적인 접근이 업무에서 성공을 가져올 것입니다. 자신의 아이디어를 믿으세요.",
+                            reversed: "과도한 자신감이 문제가 될 수 있습니다. 팀워크의 가치를 인정하세요."
+                        },
+                        daily: {
+                            upright: "새로운 시작의 에너지가 가득합니다. 도전적인 일에 적극적으로 참여하세요.",
+                            reversed: "성급한 결정을 피하고 신중하게 생각해보세요."
+                        }
+                    },
+                    2: {
+                        love: {
+                            upright: "협력과 조화가 사랑의 핵심입니다. 상대방의 감정에 민감하게 반응하세요.",
+                            reversed: "너무 수동적이어서 자신의 욕구를 표현하지 못할 수 있습니다."
+                        },
+                        career: {
+                            upright: "팀워크와 협력이 성공의 열쇠입니다. 다른 사람들과의 소통을 중시하세요.",
+                            reversed: "갈등을 피하려다 중요한 문제를 놓칠 수 있습니다."
+                        },
+                        daily: {
+                            upright: "직감과 감수성이 예리한 날입니다. 내면의 목소리를 들어보세요.",
+                            reversed: "우유부단함이 문제가 될 수 있습니다. 결정을 미루지 마세요."
+                        }
+                    },
+                    3: {
+                        love: {
+                            upright: "창의성과 표현력이 사랑을 풍부하게 만듭니다. 즐거운 대화를 나누세요.",
+                            reversed: "가벼운 태도가 진지한 관계 발전을 방해할 수 있습니다."
+                        },
+                        career: {
+                            upright: "창의적인 아이디어가 인정받을 것입니다. 자신의 재능을 자유롭게 표현하세요.",
+                            reversed: "산만함이 집중력을 떨어뜨릴 수 있습니다. 체계적으로 접근하세요."
+                        },
+                        daily: {
+                            upright: "긍정적인 에너지가 넘치는 날입니다. 주변 사람들과 즐거운 시간을 보내세요.",
+                            reversed: "과도한 낙관이 현실을 놓치게 할 수 있습니다."
+                        }
+                    },
+                    4: {
+                        love: {
+                            upright: "안정성과 신뢰가 관계의 기반입니다. 꾸준한 노력이 사랑을 깊게 만듭니다.",
+                            reversed: "너무 보수적이어서 새로운 경험을 놓칠 수 있습니다."
+                        },
+                        career: {
+                            upright: "체계적이고 꾸준한 접근이 성공을 가져올 것입니다. 인내심을 가지세요.",
+                            reversed: "완고함이 변화를 방해할 수 있습니다. 유연성을 기르세요."
+                        },
+                        daily: {
+                            upright: "안정과 질서가 중요한 날입니다. 계획을 세우고 체계적으로 진행하세요.",
+                            reversed: "지나친 완벽주의가 스트레스를 만들 수 있습니다."
+                        }
+                    },
+                    5: {
+                        love: {
+                            upright: "자유와 모험이 사랑에 새로운 활력을 불어넣습니다. 새로운 경험을 시도해보세요.",
+                            reversed: "변덕스러움이 관계의 안정성을 해칠 수 있습니다."
+                        },
+                        career: {
+                            upright: "변화와 새로운 기회가 찾아올 것입니다. 적응력을 발휘하세요.",
+                            reversed: "불안정함이 장기적인 계획을 방해할 수 있습니다."
+                        },
+                        daily: {
+                            upright: "자유와 모험이 가득한 날입니다. 새로운 경험을 추구하세요.",
+                            reversed: "산만함이 집중을 방해할 수 있습니다."
+                        }
+                    },
+                    6: {
+                        love: {
+                            upright: "사랑과 가족이 가장 중요한 가치입니다. 조화로운 관계를 만들어가세요.",
+                            reversed: "과도한 헌신이 자신을 잃게 할 수 있습니다."
+                        },
+                        career: {
+                            upright: "협력과 조화가 업무 성공의 핵심입니다. 팀워크를 중시하세요.",
+                            reversed: "타인에 대한 과도한 의존이 독립성을 해칠 수 있습니다."
+                        },
+                        daily: {
+                            upright: "가족과 친구들과의 조화로운 시간이 중요한 날입니다.",
+                            reversed: "타인을 위한 희생이 자신의 필요를 놓치게 할 수 있습니다."
+                        }
+                    },
+                    7: {
+                        love: {
+                            upright: "깊이 있는 소통과 영적 연결이 사랑을 의미 있게 만듭니다.",
+                            reversed: "과도한 분석이 감정의 자연스러운 흐름을 방해할 수 있습니다."
+                        },
+                        career: {
+                            upright: "분석적 사고와 직관이 업무에서 큰 도움이 될 것입니다.",
+                            reversed: "지나친 회의주의가 기회를 놓치게 할 수 있습니다."
+                        },
+                        daily: {
+                            upright: "내면의 성찰과 영적 성장이 중요한 날입니다.",
+                            reversed: "고립감이 외로움을 만들 수 있습니다."
+                        }
+                    },
+                    8: {
+                        love: {
+                            upright: "물질적 안정과 감정적 성숙이 균형 잡힌 사랑을 만듭니다.",
+                            reversed: "물질적 가치에 너무 집착하면 진정한 사랑을 놓칠 수 있습니다."
+                        },
+                        career: {
+                            upright: "성취와 물질적 보상이 따를 것입니다. 야망을 가지고 도전하세요.",
+                            reversed: "과도한 야망이 인간관계를 해칠 수 있습니다."
+                        },
+                        daily: {
+                            upright: "성취와 보상이 중요한 날입니다. 목표를 향해 전진하세요.",
+                            reversed: "물질적 욕구가 정신적 평화를 방해할 수 있습니다."
+                        }
+                    },
+                    9: {
+                        love: {
+                            upright: "완성과 새로운 시작의 순환 속에서 사랑의 의미를 발견하세요.",
+                            reversed: "과거의 상처가 새로운 사랑을 방해할 수 있습니다."
+                        },
+                        career: {
+                            upright: "완성과 새로운 시작의 시기입니다. 과거의 경험을 활용하세요.",
+                            reversed: "완벽주의가 새로운 시작을 방해할 수 있습니다."
+                        },
+                        daily: {
+                            upright: "완성과 새로운 시작이 교차하는 의미 있는 날입니다.",
+                            reversed: "과거에 얽매여 미래를 놓칠 수 있습니다."
+                        }
+                    }
+                };
+
+                // 계절별 해석 변형
+                const seasonInsights = {
+                    '봄': {
+                        love: "새로운 사랑의 시작과 성장의 계절입니다.",
+                        career: "새로운 프로젝트와 성장의 기회가 찾아올 것입니다.",
+                        daily: "새로운 시작과 성장의 에너지가 가득한 날입니다."
+                    },
+                    '여름': {
+                        love: "열정과 활력이 사랑을 뜨겁게 만듭니다.",
+                        career: "열정과 에너지를 업무에 쏟아부을 수 있는 시기입니다.",
+                        daily: "활력과 열정이 넘치는 에너지 넘치는 날입니다."
+                    },
+                    '가을': {
+                        love: "성숙하고 깊이 있는 사랑의 의미를 발견하는 시기입니다.",
+                        career: "수확과 성과를 확인할 수 있는 시기입니다.",
+                        daily: "성숙과 수확의 의미를 되새기는 날입니다."
+                    },
+                    '겨울': {
+                        love: "내면의 성찰을 통해 사랑의 본질을 이해하는 시기입니다.",
+                        career: "계획과 준비의 시기로, 내년을 위한 기반을 다지세요.",
+                        daily: "내면의 성찰과 휴식이 중요한 날입니다."
+                    }
+                };
+
+                // 생명수별 해석 적용
+                const lifePathInsight = lifePathInsights[lifePathNumber]?.[purpose];
+                const seasonInsight = seasonInsights[birthSeason.name]?.[purpose];
+
+                if (lifePathInsight || seasonInsight) {
+                    const baseMeaning = isReversed ? lifePathInsight?.reversed : lifePathInsight?.upright;
+                    const seasonContext = seasonInsight ? ` ${seasonInsight}` : '';
+                    
+                    return {
+                        meaning: baseMeaning + seasonContext,
+                        advice: generateNumerologicalAdvice(lifePathNumber, purpose, isReversed)
+                    };
+                }
+
+                return null;
+            } catch (error) {
+                console.error('수치학적 해석 적용 실패:', error);
+                return null;
+            }
+        }
+
+        function applyNumerologicalCombination(combinationReading, purpose, lifePathNumber, birthSeason, cardReadings) {
+            try {
+                // 생명수별 조합 해석 변형
+                const lifePathCombinations = {
+                    1: {
+                        love: "리더십과 독립성이 사랑 관계에서 중요한 역할을 합니다. 솔직한 소통으로 진정한 연결을 만들어가세요.",
+                        career: "창의적이고 혁신적인 접근이 커리어 성공의 열쇠입니다. 자신의 독특한 아이디어를 믿으세요.",
+                        daily: "새로운 시작과 도전의 에너지가 가득합니다. 적극적으로 변화를 추구하세요."
+                    },
+                    2: {
+                        love: "협력과 조화가 사랑의 핵심입니다. 상대방의 감정에 민감하게 반응하고 균형을 찾으세요.",
+                        career: "팀워크와 협력이 성공의 기반입니다. 다른 사람들과의 소통을 중시하세요.",
+                        daily: "직감과 감수성이 예리한 날입니다. 내면의 목소리를 들어보세요."
+                    },
+                    3: {
+                        love: "창의성과 표현력이 사랑을 풍부하게 만듭니다. 즐거운 대화와 창의적인 데이트를 시도해보세요.",
+                        career: "창의적인 아이디어가 인정받을 것입니다. 자신의 재능을 자유롭게 표현하세요.",
+                        daily: "긍정적인 에너지가 넘치는 날입니다. 주변 사람들과 즐거운 시간을 보내세요."
+                    },
+                    4: {
+                        love: "안정성과 신뢰가 관계의 기반입니다. 꾸준한 노력으로 깊고 의미 있는 사랑을 만들어가세요.",
+                        career: "체계적이고 꾸준한 접근이 성공을 가져올 것입니다. 인내심을 가지고 목표를 향해 나아가세요.",
+                        daily: "안정과 질서가 중요한 날입니다. 계획을 세우고 체계적으로 진행하세요."
+                    },
+                    5: {
+                        love: "자유와 모험이 사랑에 새로운 활력을 불어넣습니다. 새로운 경험과 변화를 두려워하지 마세요.",
+                        career: "변화와 새로운 기회가 찾아올 것입니다. 적응력을 발휘하고 유연하게 대응하세요.",
+                        daily: "자유와 모험이 가득한 날입니다. 새로운 경험을 추구하고 변화를 환영하세요."
+                    },
+                    6: {
+                        love: "사랑과 가족이 가장 중요한 가치입니다. 조화로운 관계를 만들어가고 타인을 돌보세요.",
+                        career: "협력과 조화가 업무 성공의 핵심입니다. 팀워크를 중시하고 다른 사람들과 함께 성장하세요.",
+                        daily: "가족과 친구들과의 조화로운 시간이 중요한 날입니다. 타인을 위한 배려를 잊지 마세요."
+                    },
+                    7: {
+                        love: "깊이 있는 소통과 영적 연결이 사랑을 의미 있게 만듭니다. 내면의 성찰을 통해 진정한 사랑을 발견하세요.",
+                        career: "분석적 사고와 직관이 업무에서 큰 도움이 될 것입니다. 깊이 있는 연구와 성찰을 중시하세요.",
+                        daily: "내면의 성찰과 영적 성장이 중요한 날입니다. 조용한 시간을 가지며 자신을 돌아보세요."
+                    },
+                    8: {
+                        love: "물질적 안정과 감정적 성숙이 균형 잡힌 사랑을 만듭니다. 실용적이면서도 감정적으로 성숙한 관계를 추구하세요.",
+                        career: "성취와 물질적 보상이 따를 것입니다. 야망을 가지고 도전하되, 윤리적 가치를 잊지 마세요.",
+                        daily: "성취와 보상이 중요한 날입니다. 목표를 향해 전진하고 자신의 가치를 인정받으세요."
+                    },
+                    9: {
+                        love: "완성과 새로운 시작의 순환 속에서 사랑의 의미를 발견하세요. 과거의 경험을 통해 성장하고 새로운 사랑을 준비하세요.",
+                        career: "완성과 새로운 시작의 시기입니다. 과거의 경험을 활용하여 더 나은 미래를 만들어가세요.",
+                        daily: "완성과 새로운 시작이 교차하는 의미 있는 날입니다. 과거를 정리하고 미래를 준비하세요."
+                    }
+                };
+
+                const lifePathInsight = lifePathCombinations[lifePathNumber]?.[purpose];
+                
+                if (lifePathInsight) {
+                    return {
+                        ...combinationReading,
+                        overall_meaning: lifePathInsight,
+                        advice: generateNumerologicalAdvice(lifePathNumber, purpose, false)
+                    };
+                }
+
+                return null;
+            } catch (error) {
+                console.error('수치학적 조합 해석 적용 실패:', error);
+                return null;
+            }
+        }
+
+        function generateNumerologicalAdvice(lifePathNumber, purpose, isReversed) {
+            const adviceTemplates = {
+                1: {
+                    love: "자신의 독립성을 유지하면서도 상대방과의 조화를 찾으세요.",
+                    career: "창의적인 아이디어를 믿고 리더십을 발휘하세요.",
+                    daily: "새로운 도전을 두려워하지 말고 적극적으로 참여하세요."
+                },
+                2: {
+                    love: "상대방의 감정에 민감하게 반응하고 협력적인 태도를 유지하세요.",
+                    career: "팀워크를 중시하고 다른 사람들과의 소통을 개선하세요.",
+                    daily: "직감을 믿고 내면의 목소리에 귀 기울이세요."
+                },
+                3: {
+                    love: "창의적이고 즐거운 방식으로 사랑을 표현하세요.",
+                    career: "자신의 재능을 자유롭게 표현하고 창의적인 접근을 시도하세요.",
+                    daily: "긍정적인 에너지를 주변 사람들과 나누세요."
+                },
+                4: {
+                    love: "안정성과 신뢰를 기반으로 한 꾸준한 노력을 기울이세요.",
+                    career: "체계적이고 꾸준한 접근으로 목표를 달성하세요.",
+                    daily: "계획을 세우고 체계적으로 일을 진행하세요."
+                },
+                5: {
+                    love: "자유와 모험을 추구하면서도 관계의 안정성을 유지하세요.",
+                    career: "변화에 적응하고 새로운 기회를 포착하세요.",
+                    daily: "새로운 경험을 추구하고 변화를 환영하세요."
+                },
+                6: {
+                    love: "가족과 사랑을 중시하고 조화로운 관계를 만들어가세요.",
+                    career: "협력과 조화를 통해 팀과 함께 성장하세요.",
+                    daily: "타인을 위한 배려와 사랑을 실천하세요."
+                },
+                7: {
+                    love: "깊이 있는 소통과 영적 연결을 추구하세요.",
+                    career: "분석적 사고와 직관을 활용하여 깊이 있는 연구를 하세요.",
+                    daily: "내면의 성찰과 영적 성장에 시간을 투자하세요."
+                },
+                8: {
+                    love: "물질적 안정과 감정적 성숙의 균형을 찾으세요.",
+                    career: "성취와 보상을 추구하되 윤리적 가치를 잊지 마세요.",
+                    daily: "목표를 향해 전진하고 자신의 가치를 인정받으세요."
+                },
+                9: {
+                    love: "과거의 경험을 통해 성장하고 새로운 사랑을 준비하세요.",
+                    career: "과거의 경험을 활용하여 더 나은 미래를 만들어가세요.",
+                    daily: "과거를 정리하고 미래를 준비하는 시간을 가지세요."
+                }
+            };
+
+            const baseAdvice = adviceTemplates[lifePathNumber]?.[purpose];
+            
+            if (isReversed) {
+                return baseAdvice + " 현재 어려운 시기를 겪고 있을 수 있지만, 인내심을 가지고 상황을 관찰하세요.";
+            }
+            
+            return baseAdvice;
         }
 
         // === 해석 생성 함수들 ===
@@ -1100,6 +1665,9 @@
             console.log('=== 한 장 리딩 시작 ===');
             console.log('선택된 카드:', selectedSingleCard);
             console.log('선택된 목적:', selectedPurpose);
+            console.log('사용자 생년월일:', userBirthDate);
+            console.log('생명수:', lifePathNumber);
+            console.log('출생 계절:', birthSeason);
             
             if (!selectedSingleCard) {
                 alert('카드를 먼저 선택해주세요.');
@@ -1136,17 +1704,45 @@
                     };
                 }
                 
+                // 수치학적 개인화 적용
+                let personalizedMeaning = cardWithGroup.reversed ? cardReading.reversed_meaning : cardReading.upright_meaning;
+                let personalizedAdvice = cardReading.advice;
+                
+                if (userBirthDate && lifePathNumber) {
+                    const numerologicalInsight = applyNumerologicalInsight(
+                        cardWithGroup, 
+                        selectedPurpose, 
+                        lifePathNumber, 
+                        birthSeason,
+                        cardWithGroup.reversed
+                    );
+                    
+                    if (numerologicalInsight) {
+                        personalizedMeaning = numerologicalInsight.meaning;
+                        personalizedAdvice = numerologicalInsight.advice;
+                    }
+                }
+                
                 // 한 장 리딩 특화 해석 생성
-                const singleReadingData = generateSingleReadingInsight(cardReading, selectedPurpose, cardWithGroup.reversed);
+                const singleReadingData = generateSingleReadingInsight(
+                    { ...cardReading, upright_meaning: personalizedMeaning, advice: personalizedAdvice }, 
+                    selectedPurpose, 
+                    cardWithGroup.reversed
+                );
                 
                 // 리딩 데이터 생성
                 readingData = {
                     type: 'single',
                     card: cardWithGroup,
                     purpose: selectedPurpose,
-                    cardReading: cardReading,
+                    cardReading: { ...cardReading, upright_meaning: personalizedMeaning, advice: personalizedAdvice },
                     singleInsight: singleReadingData,
-                    timestamp: new Date()
+                    timestamp: new Date(),
+                    numerologicalData: userBirthDate ? {
+                        birthDate: userBirthDate,
+                        lifePathNumber: lifePathNumber,
+                        birthSeason: birthSeason
+                    } : null
                 };
                 
                 console.log('한 장 리딩 데이터 생성 완료:', readingData);
@@ -1258,8 +1854,31 @@
             const cardReading = readingData.cardReading;
             const insight = readingData.singleInsight;
             
+            // 수치학적 정보 표시
+            let numerologicalInfo = '';
+            if (readingData.numerologicalData) {
+                const birthDateStr = readingData.numerologicalData.birthDate.toLocaleDateString('ko-KR', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                
+                numerologicalInfo = `
+                    <div class="numerological-info">
+                        <h4>🔢 수치학적 개인화 정보</h4>
+                        <p><strong>생년월일:</strong> ${birthDateStr}</p>
+                        <p><strong>생명수:</strong> ${readingData.numerologicalData.lifePathNumber}</p>
+                        <p><strong>출생 계절:</strong> ${readingData.numerologicalData.birthSeason.emoji} ${readingData.numerologicalData.birthSeason.name}</p>
+                        <p class="numerological-note">💡 위의 해석은 수치학적 관점을 바탕으로 개인화되었습니다.</p>
+                    </div>
+                `;
+            }
+            
             // 카드 정보 표시
-            document.getElementById('singleResultCardName').textContent = card.name;
+            const numerologicalBadge = readingData.numerologicalData ? 
+                ' <span class="numerological-badge">🔢 수치학적 해석</span>' : '';
+            
+            document.getElementById('singleResultCardName').textContent = card.name + numerologicalBadge;
             document.getElementById('singleResultCardType').textContent = 
                 card.major_minor === 'major' ? '메이저 아르카나' : '마이너 아르카나';
             document.getElementById('singleResultCardDirection').textContent = 
@@ -1305,6 +1924,7 @@
             // 목적별 특화 정보
             document.getElementById('singleSpecialTitle').textContent = insight.title;
             document.getElementById('singleSpecialInsight').innerHTML = `
+                ${numerologicalInfo}
                 <p><strong>${insight.focus}:</strong> ${meaning}</p>
                 <p><strong>${insight.action}:</strong> ${cardReading.advice}</p>
                 <p><strong>${insight.avoid}:</strong> ${card.reversed ? '현재 상황을 너무 부정적으로 보지 마세요.' : '과도한 자신감은 금물입니다.'}</p>
@@ -1317,7 +1937,10 @@
             selectedCards = [];
             selectedSingleCard = null;
             readingData = null;
-            showSection('purpose');
+            userBirthDate = null;
+            lifePathNumber = null;
+            birthSeason = null;
+            showSection('birthDateInput');
         }
     </script>
 </body>
