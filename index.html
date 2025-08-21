@@ -189,142 +189,100 @@
             data() {
                 return {
                     selectedCards: [],
-                    currentFilter: 'all',
-                    searchTerm: '',
-                    sortBy: 'id'
+                    isSelecting: false
                 };
-            },
-            computed: {
-                filteredCards() {
-                    let cards = this.cards || [];
-                    
-                    // 필터링 (간단한 버전)
-                    if (this.currentFilter !== 'all') {
-                        cards = cards.filter(card => {
-                            if (this.currentFilter === 'major') return card.major_minor === 'major';
-                            if (this.currentFilter === 'minor') return card.major_minor === 'minor';
-                            return card.suit === this.currentFilter;
-                        });
-                    }
-                    
-                    // 검색
-                    if (this.searchTerm) {
-                        const term = this.searchTerm.toLowerCase();
-                        cards = cards.filter(card => 
-                            card.name.toLowerCase().includes(term) ||
-                            (card.keywords && card.keywords.toLowerCase().includes(term))
-                        );
-                    }
-                    
-                    // 정렬
-                    cards = cards.sort((a, b) => {
-                        if (this.sortBy === 'name') return a.name.localeCompare(b.name);
-                        if (this.sortBy === 'type') {
-                            if (a.major_minor !== b.major_minor) {
-                                return a.major_minor === 'major' ? -1 : 1;
-                            }
-                            return a.id - b.id;
-                        }
-                        return a.id - b.id;
-                    });
-                    
-                    return cards;
-                }
             },
             template: `
                 <div class="section tarot-deck">
-                    <h2>🃏 타로 카드 선택</h2>
-                    <p class="text-center mb-3">3장의 카드를 선택해주세요 ({{ selectedCards.length }}/3)</p>
+                    <h2>🃏 타로 카드 랜덤 선택</h2>
+                    <p class="text-center mb-3">버튼을 눌러 카드를 랜덤하게 선택하세요 ({{ selectedCards.length }}/3)</p>
                     
-                    <!-- 필터 및 검색 -->
-                    <div class="deck-controls">
-                        <div class="filter-section">
-                            <select v-model="currentFilter" class="filter-select">
-                                <option value="all">전체</option>
-                                <option value="major">메이저 아르카나</option>
-                                <option value="minor">마이너 아르카나</option>
-                                <option value="wands">완드</option>
-                                <option value="cups">컵</option>
-                                <option value="swords">검</option>
-                                <option value="pentacles">펜타클</option>
-                            </select>
-                        </div>
+                    <!-- 랜덤 선택 버튼 -->
+                    <div class="random-selection-area">
+                        <button 
+                            @click="selectRandomCard" 
+                            :disabled="selectedCards.length >= 3 || isSelecting"
+                            class="btn btn-primary random-select-btn">
+                            <span v-if="!isSelecting">🎲 카드 랜덤 선택</span>
+                            <span v-else>선택 중...</span>
+                        </button>
                         
-                        <div class="search-section">
-                            <input 
-                                type="text" 
-                                v-model="searchTerm"
-                                placeholder="카드 이름으로 검색..."
-                                class="search-input">
-                        </div>
+                        <button 
+                            @click="resetSelection" 
+                            :disabled="selectedCards.length === 0"
+                            class="btn btn-secondary reset-btn">
+                            🔄 다시 시작
+                        </button>
                     </div>
                     
                     <!-- 선택된 카드 표시 -->
                     <div v-if="selectedCards.length > 0" class="selected-cards-display">
-                        <h4>선택된 카드</h4>
-                        <div class="selected-cards-grid">
+                        <h3>선택된 카드들</h3>
+                        <div class="selected-cards-list">
                             <div 
                                 v-for="(card, index) in selectedCards" 
                                 :key="card.id"
                                 class="selected-card-item">
+                                <div class="card-number">{{ index + 1 }}번째 카드</div>
                                 <div class="card-name">{{ card.name }}</div>
-                                <button @click="removeCard(index)" class="remove-btn">제거</button>
+                                <div class="card-direction">{{ card.reversed ? '역방향' : '정방향' }}</div>
+                                <div class="card-type">{{ card.major_minor === 'major' ? '메이저 아르카나' : '마이너 아르카나' }}</div>
+                                <button @click="removeCard(index)" class="remove-btn">❌ 제거</button>
                             </div>
-                        </div>
-                    </div>
-                    
-                    <!-- 카드 그리드 -->
-                    <div class="cards-container">
-                        <div class="cards-grid">
-                            <div 
-                                v-for="card in filteredCards" 
-                                :key="card.id"
-                                class="tarot-card"
-                                :class="{ 'selected': selectedCards.find(c => c.id === card.id) }"
-                                @click="selectCard(card)">
-                                
-                                <div class="card-name">{{ card.name }}</div>
-                                <div class="card-type">{{ card.major_minor === 'major' ? '메이저' : '마이너' }}</div>
-                                
-                                <div v-if="selectedCards.find(c => c.id === card.id)" class="selected-indicator">
-                                    ✓ 선택됨
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div v-if="filteredCards.length === 0" class="no-cards">
-                            <p>검색 조건에 맞는 카드가 없습니다.</p>
                         </div>
                     </div>
                     
                     <!-- 선택 완료 버튼 -->
                     <div v-if="selectedCards.length === 3" class="selection-complete">
                         <button @click="completeSelection" class="btn btn-secondary">
-                            카드 선택 완료 (3/3)
+                            🔮 리딩 시작하기 (3/3)
                         </button>
                     </div>
                 </div>
             `,
             methods: {
-                selectCard(card) {
+                selectRandomCard() {
                     if (this.selectedCards.length >= 3) {
                         alert('이미 3장의 카드를 선택했습니다.');
                         return;
                     }
                     
-                    if (this.selectedCards.find(c => c.id === card.id)) {
-                        alert('이미 선택된 카드입니다.');
-                        return;
-                    }
+                    this.isSelecting = true;
                     
-                    this.selectedCards.push({
-                        ...card,
-                        reversed: Math.random() > 0.5 // 랜덤 역방향
-                    });
+                    // 애니메이션 효과를 위한 지연
+                    setTimeout(() => {
+                        const availableCards = this.cards.filter(card => 
+                            !this.selectedCards.find(selected => selected.id === card.id)
+                        );
+                        
+                        if (availableCards.length === 0) {
+                            alert('선택할 수 있는 카드가 없습니다.');
+                            this.isSelecting = false;
+                            return;
+                        }
+                        
+                        // 랜덤 카드 선택
+                        const randomIndex = Math.floor(Math.random() * availableCards.length);
+                        const selectedCard = availableCards[randomIndex];
+                        
+                        // 랜덤 역방향 설정
+                        const isReversed = Math.random() > 0.5;
+                        
+                        this.selectedCards.push({
+                            ...selectedCard,
+                            reversed: isReversed
+                        });
+                        
+                        this.isSelecting = false;
+                    }, 500); // 0.5초 지연으로 선택 효과 연출
                 },
                 
                 removeCard(index) {
                     this.selectedCards.splice(index, 1);
+                },
+                
+                resetSelection() {
+                    this.selectedCards = [];
                 },
                 
                 completeSelection() {
