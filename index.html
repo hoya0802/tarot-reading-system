@@ -200,6 +200,19 @@
             await initializeApp();
         });
 
+        // 카드 데이터 가져오기 함수
+        async function fetchCards() {
+            try {
+                console.log('카드 데이터 가져오기 시작...');
+                const cards = await window.loadCards();
+                console.log('카드 데이터 로드 완료:', cards.length, '장');
+                return cards;
+            } catch (error) {
+                console.error('카드 데이터 가져오기 실패:', error);
+                throw error;
+            }
+        }
+
         async function initializeApp() {
             try {
                 showLoading(true);
