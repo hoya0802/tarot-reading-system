@@ -64,9 +64,95 @@
                     </div>
                 </div>
 
-                <!-- 카드 선택 -->
+                <!-- 리딩 타입 선택 -->
+                <div id="readingType" class="section reading-type-selector" style="display: none;">
+                    <h2>🎴 리딩 방식을 선택하세요</h2>
+                    <p class="text-center mb-4">선택하신 목적: <span id="selectedPurposeName" class="purpose-badge"></span></p>
+                    
+                    <div class="reading-type-grid">
+                        <button class="reading-type-card" onclick="selectReadingType('single')">
+                            <div class="type-icon">🎴</div>
+                            <h3>한 장 리딩</h3>
+                            <p>오늘의 핵심 메시지와 조언</p>
+                            <div class="type-features">
+                                <span class="feature">✨ 빠른 리딩</span>
+                                <span class="feature">🎯 핵심 메시지</span>
+                                <span class="feature">💡 즉시 조언</span>
+                            </div>
+                        </button>
+                        
+                        <button class="reading-type-card" onclick="selectReadingType('three')">
+                            <div class="type-icon">🔮</div>
+                            <h3>3장 스프레드</h3>
+                            <p>과거-현재-미래의 흐름</p>
+                            <div class="type-features">
+                                <span class="feature">📖 상세 분석</span>
+                                <span class="feature">⏰ 시간 흐름</span>
+                                <span class="feature">🌟 종합 해석</span>
+                            </div>
+                        </button>
+                    </div>
+                    
+                    <div class="text-center mt-4">
+                        <button class="btn btn-secondary" onclick="goBackToPurpose()">
+                            ← 목적 다시 선택
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 한 장 카드 선택 -->
+                <div id="singleDeck" class="section single-card-deck" style="display: none;">
+                    <h2>🎴 한 장의 카드를 선택하세요</h2>
+                    <p class="text-center mb-4">
+                        목적: <span id="singlePurposeName" class="purpose-badge"></span> | 
+                        리딩 타입: <span class="type-badge">한 장 리딩</span>
+                    </p>
+                    
+                    <!-- 랜덤 선택 영역 -->
+                    <div class="single-selection-area">
+                        <div class="card-deck-visual">
+                            <div class="deck-cards">
+                                <div class="deck-card"></div>
+                                <div class="deck-card"></div>
+                                <div class="deck-card"></div>
+                            </div>
+                            <p>78장의 카드 중 하나를 선택하세요</p>
+                        </div>
+                        
+                        <button id="singleRandomBtn" class="single-random-btn" onclick="selectSingleRandomCard()">
+                            ✨ 운명의 카드 뽑기
+                        </button>
+                        
+                        <button class="reset-btn" onclick="resetSingleSelection()">
+                            🔄 다시 뽑기
+                        </button>
+                    </div>
+
+                    <!-- 선택된 카드 표시 -->
+                    <div id="singleCardDisplay" class="single-card-display" style="display: none;">
+                        <h3>선택된 카드</h3>
+                        <div id="singleSelectedCard" class="single-selected-card">
+                            <!-- 선택된 카드가 여기에 표시됩니다 -->
+                        </div>
+                        <button id="singleCompleteBtn" class="single-complete" onclick="startSingleReading()">
+                            ✨ 리딩 시작하기
+                        </button>
+                    </div>
+                    
+                    <div class="text-center mt-4">
+                        <button class="btn btn-secondary" onclick="goBackToReadingType()">
+                            ← 리딩 방식 다시 선택
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 3장 카드 선택 -->
                 <div id="deck" class="section tarot-deck" style="display: none;">
-                    <h2>🎴 카드를 선택하세요</h2>
+                    <h2>🎴 3장의 카드를 선택하세요</h2>
+                    <p class="text-center mb-4">
+                        목적: <span id="threePurposeName" class="purpose-badge"></span> | 
+                        리딩 타입: <span class="type-badge">3장 스프레드</span>
+                    </p>
                     
                     <!-- 랜덤 선택 영역 -->
                     <div class="random-selection-area">
@@ -86,6 +172,12 @@
                         </div>
                         <button id="completeBtn" class="selection-complete" onclick="goToSpread()" style="display: none;">
                             🔮 리딩 시작하기
+                        </button>
+                    </div>
+                    
+                    <div class="text-center mt-4">
+                        <button class="btn btn-secondary" onclick="goBackToReadingType()">
+                            ← 리딩 방식 다시 선택
                         </button>
                     </div>
                 </div>
@@ -141,9 +233,68 @@
                     </div>
                 </div>
 
-                <!-- 리딩 결과 -->
+                <!-- 한 장 리딩 결과 -->
+                <div id="singleResult" class="section single-reading-result" style="display: none;">
+                    <h2>✨ 한 장 리딩 결과</h2>
+                    
+                    <div class="single-result-content">
+                        <!-- 선택된 카드 표시 -->
+                        <div class="single-result-card">
+                            <div id="singleResultCardDisplay" class="single-card-large">
+                                <!-- 카드 이미지가 여기에 표시됩니다 -->
+                            </div>
+                            <div class="single-card-info">
+                                <h3 id="singleResultCardName">카드 이름</h3>
+                                <p id="singleResultCardType" class="card-type">카드 타입</p>
+                                <p id="singleResultCardDirection" class="card-direction">방향</p>
+                            </div>
+                        </div>
+
+                        <!-- 핵심 메시지 -->
+                        <div class="single-result-message">
+                            <h3>🎯 핵심 메시지</h3>
+                            <p id="singleCoreMeaning" class="core-meaning">핵심 메시지가 여기에 표시됩니다.</p>
+                        </div>
+
+                        <!-- 상세 해석 -->
+                        <div class="single-result-sections">
+                            <div class="single-section">
+                                <h4>🔍 상세 해석</h4>
+                                <p id="singleDetailedMeaning">상세 해석이 여기에 표시됩니다.</p>
+                            </div>
+                            
+                            <div class="single-section">
+                                <h4>🏷️ 키워드</h4>
+                                <p id="singleKeywords" class="keywords">키워드가 여기에 표시됩니다.</p>
+                            </div>
+                            
+                            <div class="single-section">
+                                <h4 id="singleSpecialTitle">💡 특별 조언</h4>
+                                <p id="singleSpecialInsight">목적별 특별 조언이 여기에 표시됩니다.</p>
+                            </div>
+                        </div>
+
+                        <!-- 조언 -->
+                        <div class="single-result-advice">
+                            <h3>💡 오늘의 조언</h3>
+                            <p id="singleAdvice" class="advice-text">조언이 여기에 표시됩니다.</p>
+                        </div>
+
+                        <!-- 액션 버튼 -->
+                        <div class="single-result-actions">
+                            <button class="btn btn-primary" onclick="startOver()">
+                                🔄 새로운 리딩 시작
+                            </button>
+                            <button class="btn btn-secondary" onclick="goBackToSingleDeck()">
+                                🎴 다른 카드 뽑기
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3장 리딩 결과 -->
                 <div id="result" class="section reading-result" style="display: none;">
-                    <h2>✨ 타로 리딩 결과</h2>
+                    <h2>✨ 3장 스프레드 리딩 결과</h2>
                     
                     <!-- 디버깅 정보 -->
                     <div id="resultDebug" class="debug-info">
@@ -186,7 +337,9 @@
         // === 전역 변수들 ===
         let currentStep = 'purpose';
         let selectedPurpose = null;
+        let selectedReadingType = null; // 'single' 또는 'three'
         let selectedCards = [];
+        let selectedSingleCard = null;
         let allCards = [];
         let readingData = null;
         let supabase = null;
@@ -380,13 +533,19 @@
             console.log('섹션 변경:', currentStep, '→', sectionName);
             
             // 모든 섹션 숨기기
-            const sections = ['loading', 'setup', 'purpose', 'deck', 'spread', 'result'];
+            const sections = ['loading', 'setup', 'purpose', 'readingType', 'singleDeck', 'deck', 'spread', 'singleResult', 'result'];
             sections.forEach(section => {
-                document.getElementById(section).style.display = 'none';
+                const element = document.getElementById(section);
+                if (element) {
+                    element.style.display = 'none';
+                }
             });
             
             // 해당 섹션 표시
-            document.getElementById(sectionName).style.display = 'block';
+            const targetElement = document.getElementById(sectionName);
+            if (targetElement) {
+                targetElement.style.display = 'block';
+            }
             currentStep = sectionName;
             
             console.log('현재 단계:', currentStep);
@@ -424,7 +583,61 @@
             console.log('선택된 목적:', purpose);
             
             selectedPurpose = purpose;
-            showSection('deck');
+            
+            // 목적 이름 표시
+            const purposeNames = {
+                'love': '💕 사랑과 관계',
+                'career': '💼 직장과 업무', 
+                'daily': '🌟 오늘의 운세',
+                'health': '🏥 건강과 웰빙',
+                'money': '💰 재정과 돈'
+            };
+            
+            document.getElementById('selectedPurposeName').textContent = purposeNames[purpose];
+            showSection('readingType');
+        }
+
+        // === 리딩 타입 선택 ===
+        function selectReadingType(type) {
+            console.log('=== 리딩 타입 선택됨 ===');
+            console.log('선택된 타입:', type);
+            
+            selectedReadingType = type;
+            
+            const purposeNames = {
+                'love': '💕 사랑과 관계',
+                'career': '💼 직장과 업무',
+                'daily': '🌟 오늘의 운세', 
+                'health': '🏥 건강과 웰빙',
+                'money': '💰 재정과 돈'
+            };
+            
+            if (type === 'single') {
+                document.getElementById('singlePurposeName').textContent = purposeNames[selectedPurpose];
+                showSection('singleDeck');
+            } else if (type === 'three') {
+                document.getElementById('threePurposeName').textContent = purposeNames[selectedPurpose];
+                showSection('deck');
+            }
+        }
+
+        // === 네비게이션 함수들 ===
+        function goBackToPurpose() {
+            selectedPurpose = null;
+            selectedReadingType = null;
+            showSection('purpose');
+        }
+
+        function goBackToReadingType() {
+            selectedReadingType = null;
+            selectedCards = [];
+            selectedSingleCard = null;
+            showSection('readingType');
+        }
+
+        function goBackToSingleDeck() {
+            selectedSingleCard = null;
+            showSection('singleDeck');
         }
 
         // === 랜덤 카드 선택 ===
@@ -806,9 +1019,303 @@
             showSection('deck');
         }
 
+        // === 한 장 카드 선택 ===
+        function selectSingleRandomCard() {
+            console.log('=== 한 장 랜덤 카드 선택 ===');
+            
+            if (allCards.length === 0) {
+                alert('카드 데이터를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
+                return;
+            }
+
+            // 랜덤 선택
+            const randomIndex = Math.floor(Math.random() * allCards.length);
+            const selectedCard = allCards[randomIndex];
+            
+            // 정방향/역방향 랜덤 결정
+            selectedCard.reversed = Math.random() < 0.5;
+            
+            selectedSingleCard = selectedCard;
+            
+            console.log('선택된 카드:', selectedCard.name, selectedCard.reversed ? '(역방향)' : '(정방향)');
+            
+            updateSingleCardDisplay();
+        }
+
+        // === 한 장 카드 표시 업데이트 ===
+        function updateSingleCardDisplay() {
+            const card = selectedSingleCard;
+            const displayElement = document.getElementById('singleSelectedCard');
+            
+            displayElement.innerHTML = `
+                <div class="single-card-visual">
+                    <div class="card-placeholder ${card.reversed ? 'reversed' : ''}" style="
+                        width: 200px;
+                        height: 320px;
+                        background: linear-gradient(135deg, #2c3e50, #34495e);
+                        border: 3px solid #ecf0f1;
+                        border-radius: 15px;
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: center;
+                        align-items: center;
+                        text-align: center;
+                        padding: 20px;
+                        box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+                        margin: 0 auto 20px;
+                        transform: ${card.reversed ? 'rotate(180deg)' : 'rotate(0deg)'};
+                    ">
+                        <div style="color: #ecf0f1; font-size: 16px; font-weight: bold; margin-bottom: 10px;">
+                            ${card.name}
+                        </div>
+                        <div style="color: #ecf0f1; font-size: 12px; opacity: 0.8;">
+                            ${card.suit ? `${card.suit}` : ''}
+                        </div>
+                        <div style="color: #ecf0f1; font-size: 10px; opacity: 0.6; margin-top: 10px;">
+                            ${card.reversed ? 'Reversed' : 'Upright'}
+                        </div>
+                    </div>
+                </div>
+                <div class="single-card-details">
+                    <h4>${card.name}</h4>
+                    <p class="card-type">${card.major_minor === 'major' ? '메이저 아르카나' : '마이너 아르카나'}</p>
+                    <p class="card-direction ${card.reversed ? 'reversed' : 'upright'}">
+                        ${card.reversed ? '역방향' : '정방향'}
+                    </p>
+                </div>
+            `;
+            
+            document.getElementById('singleCardDisplay').style.display = 'block';
+        }
+
+        // === 한 장 선택 초기화 ===
+        function resetSingleSelection() {
+            console.log('한 장 선택 초기화');
+            selectedSingleCard = null;
+            document.getElementById('singleCardDisplay').style.display = 'none';
+        }
+
+        // === 한 장 리딩 시작 ===
+        async function startSingleReading() {
+            console.log('=== 한 장 리딩 시작 ===');
+            console.log('선택된 카드:', selectedSingleCard);
+            console.log('선택된 목적:', selectedPurpose);
+            
+            if (!selectedSingleCard) {
+                alert('카드를 먼저 선택해주세요.');
+                return;
+            }
+            
+            try {
+                showLoading(true);
+                
+                // 카드에 그룹 정보 추가
+                const cardWithGroup = addGroupInfoToCard(selectedSingleCard);
+                
+                // 목적별 개별 카드 해석 조회
+                let cardReading = null;
+                try {
+                    const { data, error } = await supabase
+                        .from('tarot_purpose_readings')
+                        .select('*')
+                        .eq('card_id', cardWithGroup.id)
+                        .eq('purpose_type', selectedPurpose)
+                        .single();
+                    
+                    if (error) throw error;
+                    cardReading = data;
+                    console.log('목적별 카드 해석 조회 성공:', cardReading);
+                } catch (error) {
+                    console.error('목적별 카드 해석 조회 실패:', error);
+                    // 폴백 해석
+                    cardReading = {
+                        upright_meaning: cardWithGroup.upright_meaning,
+                        reversed_meaning: cardWithGroup.reversed_meaning,
+                        keywords: cardWithGroup.keywords,
+                        advice: '현재 상황을 잘 관찰하고 신중하게 판단하세요.'
+                    };
+                }
+                
+                // 한 장 리딩 특화 해석 생성
+                const singleReadingData = generateSingleReadingInsight(cardReading, selectedPurpose, cardWithGroup.reversed);
+                
+                // 리딩 데이터 생성
+                readingData = {
+                    type: 'single',
+                    card: cardWithGroup,
+                    purpose: selectedPurpose,
+                    cardReading: cardReading,
+                    singleInsight: singleReadingData,
+                    timestamp: new Date()
+                };
+                
+                console.log('한 장 리딩 데이터 생성 완료:', readingData);
+                
+                updateSingleResultDisplay();
+                showSection('singleResult');
+                
+            } catch (error) {
+                console.error('한 장 리딩 생성 실패:', error);
+                alert('리딩을 생성하는 중 오류가 발생했습니다.');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // === 카드에 그룹 정보 추가 ===
+        function addGroupInfoToCard(card) {
+            let groupId = null;
+            let groupName = null;
+            
+            if (card.major_minor === 'major') {
+                const majorGroups = {
+                    0: { id: 1, name: 'new_beginnings' },
+                    1: { id: 1, name: 'new_beginnings' },
+                    2: { id: 1, name: 'new_beginnings' },
+                    6: { id: 2, name: 'relationships' },
+                    11: { id: 2, name: 'relationships' },
+                    14: { id: 2, name: 'relationships' },
+                    13: { id: 3, name: 'transformation' },
+                    16: { id: 3, name: 'transformation' },
+                    20: { id: 3, name: 'transformation' },
+                    3: { id: 4, name: 'material_world' },
+                    4: { id: 4, name: 'material_world' },
+                    5: { id: 4, name: 'material_world' },
+                    7: { id: 5, name: 'spiritual_journey' },
+                    8: { id: 5, name: 'spiritual_journey' },
+                    9: { id: 5, name: 'spiritual_journey' },
+                    10: { id: 6, name: 'completion' },
+                    12: { id: 6, name: 'completion' },
+                    15: { id: 6, name: 'completion' },
+                    17: { id: 6, name: 'completion' },
+                    18: { id: 6, name: 'completion' },
+                    19: { id: 6, name: 'completion' },
+                    21: { id: 6, name: 'completion' }
+                };
+                const group = majorGroups[card.id] || { id: 6, name: 'completion' };
+                groupId = group.id;
+                groupName = group.name;
+            } else {
+                const suitGroups = {
+                    'wands': { id: 7, name: 'wands' },
+                    'cups': { id: 8, name: 'cups' },
+                    'swords': { id: 9, name: 'swords' },
+                    'pentacles': { id: 10, name: 'pentacles' }
+                };
+                const group = suitGroups[card.suit] || { id: 7, name: 'wands' };
+                groupId = group.id;
+                groupName = group.name;
+            }
+            
+            return { ...card, groupId, groupName };
+        }
+
+        // === 한 장 리딩 특화 해석 생성 ===
+        function generateSingleReadingInsight(cardReading, purposeType, isReversed) {
+            const meaning = isReversed ? cardReading.reversed_meaning : cardReading.upright_meaning;
+            
+            const insights = {
+                love: {
+                    title: '💕 연애 특별 조언',
+                    focus: '오늘 연애에서 가장 중요한 것',
+                    action: '취해야 할 행동',
+                    avoid: '피해야 할 것'
+                },
+                career: {
+                    title: '💼 직장 가이드',
+                    focus: '업무에서 집중할 점',
+                    action: '오늘의 업무 전략', 
+                    avoid: '주의해야 할 상황'
+                },
+                daily: {
+                    title: '☀️ 오늘의 집중점',
+                    focus: '오늘의 핵심 에너지',
+                    action: '오늘 해야 할 일',
+                    avoid: '오늘 피해야 할 것'
+                },
+                health: {
+                    title: '🌿 건강 주의사항',
+                    focus: '건강 관리 포인트',
+                    action: '건강을 위한 행동',
+                    avoid: '건강에 해로운 것'
+                },
+                money: {
+                    title: '💰 금전 전망',
+                    focus: '재정 관리 포인트',
+                    action: '재정을 위한 행동',
+                    avoid: '재정적 위험 요소'
+                }
+            };
+            
+            return insights[purposeType] || insights.daily;
+        }
+
+        // === 한 장 리딩 결과 화면 업데이트 ===
+        function updateSingleResultDisplay() {
+            console.log('=== 한 장 리딩 결과 화면 업데이트 ===');
+            
+            const card = readingData.card;
+            const cardReading = readingData.cardReading;
+            const insight = readingData.singleInsight;
+            
+            // 카드 정보 표시
+            document.getElementById('singleResultCardName').textContent = card.name;
+            document.getElementById('singleResultCardType').textContent = 
+                card.major_minor === 'major' ? '메이저 아르카나' : '마이너 아르카나';
+            document.getElementById('singleResultCardDirection').textContent = 
+                card.reversed ? '역방향' : '정방향';
+            
+            // 카드 이미지 표시
+            document.getElementById('singleResultCardDisplay').innerHTML = `
+                <div class="card-placeholder ${card.reversed ? 'reversed' : ''}" style="
+                    width: 250px;
+                    height: 400px;
+                    background: linear-gradient(135deg, #2c3e50, #34495e);
+                    border: 3px solid #ecf0f1;
+                    border-radius: 15px;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                    text-align: center;
+                    padding: 20px;
+                    box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+                    margin: 0 auto;
+                    transform: ${card.reversed ? 'rotate(180deg)' : 'rotate(0deg)'};
+                ">
+                    <div style="color: #ecf0f1; font-size: 18px; font-weight: bold; margin-bottom: 15px;">
+                        ${card.name}
+                    </div>
+                    <div style="color: #ecf0f1; font-size: 14px; opacity: 0.8;">
+                        ${card.suit ? `${card.suit}` : ''}
+                    </div>
+                    <div style="color: #ecf0f1; font-size: 12px; opacity: 0.6; margin-top: 15px;">
+                        ${card.reversed ? 'Reversed' : 'Upright'}
+                    </div>
+                </div>
+            `;
+            
+            // 해석 내용 표시
+            const meaning = card.reversed ? cardReading.reversed_meaning : cardReading.upright_meaning;
+            document.getElementById('singleCoreMeaning').textContent = meaning;
+            document.getElementById('singleDetailedMeaning').textContent = meaning;
+            document.getElementById('singleKeywords').textContent = cardReading.keywords;
+            document.getElementById('singleAdvice').textContent = cardReading.advice;
+            
+            // 목적별 특화 정보
+            document.getElementById('singleSpecialTitle').textContent = insight.title;
+            document.getElementById('singleSpecialInsight').innerHTML = `
+                <p><strong>${insight.focus}:</strong> ${meaning}</p>
+                <p><strong>${insight.action}:</strong> ${cardReading.advice}</p>
+                <p><strong>${insight.avoid}:</strong> ${card.reversed ? '현재 상황을 너무 부정적으로 보지 마세요.' : '과도한 자신감은 금물입니다.'}</p>
+            `;
+        }
+
         function startOver() {
             selectedPurpose = null;
+            selectedReadingType = null;
             selectedCards = [];
+            selectedSingleCard = null;
             readingData = null;
             showSection('purpose');
         }
