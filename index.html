@@ -304,31 +304,47 @@
                  selectedCards: {
                      immediate: true,
                      deep: true,
-                     handler(newCards) {
+                     handler(newCards, oldCards) {
+                         console.log('=== CardSpread watch 실행됨 ===');
                          console.log('CardSpread selectedCards 변경됨:', newCards);
+                         console.log('이전 카드들:', oldCards);
+                         console.log('newCards 타입:', typeof newCards);
+                         console.log('newCards 길이:', newCards ? newCards.length : 'undefined');
+                         console.log('newCards 배열 여부:', Array.isArray(newCards));
+                         console.log('newCards 내용:', JSON.stringify(newCards, null, 2));
                          
                          // 간단하고 명확한 로직
                          if (newCards && Array.isArray(newCards) && newCards.length > 0) {
                              this.localSelectedCards = [...newCards];
                              console.log('localSelectedCards 설정됨:', this.localSelectedCards);
+                             console.log('localSelectedCards 길이:', this.localSelectedCards.length);
                          } else {
                              this.localSelectedCards = [];
                              console.log('localSelectedCards 빈 배열로 설정됨');
                          }
+                         console.log('=== CardSpread watch 완료 ===');
                      }
                  }
              },
                          mounted() {
-                 console.log('CardSpread 컴포넌트 마운트됨');
+                 console.log('=== CardSpread 컴포넌트 마운트됨 ===');
                  console.log('selectedCards props:', this.selectedCards);
+                 console.log('selectedCards props 타입:', typeof this.selectedCards);
+                 console.log('selectedCards props 길이:', this.selectedCards ? this.selectedCards.length : 'undefined');
+                 console.log('selectedCards props 내용:', JSON.stringify(this.selectedCards, null, 2));
                  
                  // mounted에서도 selectedCards가 있으면 설정
                  if (this.selectedCards && Array.isArray(this.selectedCards) && this.selectedCards.length > 0) {
                      this.localSelectedCards = [...this.selectedCards];
                      console.log('mounted에서 localSelectedCards 설정됨:', this.localSelectedCards);
+                     console.log('mounted에서 localSelectedCards 길이:', this.localSelectedCards.length);
                  } else {
                      console.log('mounted에서 selectedCards가 없음, watch에서 처리 대기');
+                     console.log('selectedCards 존재 여부:', !!this.selectedCards);
+                     console.log('selectedCards 배열 여부:', Array.isArray(this.selectedCards));
+                     console.log('selectedCards 길이 확인:', this.selectedCards ? this.selectedCards.length : 'undefined');
                  }
+                 console.log('=== CardSpread 마운트 완료 ===');
              },
             template: `
                 <div class="section card-spread">
@@ -706,15 +722,20 @@
                      console.log('currentStep 변경 전:', this.currentStep);
                      console.log('selectedCards 설정 전:', this.selectedCards);
                      
-                     // 데이터 설정과 단계 변경을 동시에 실행
-                     this.selectedCards = cards;
-                     this.currentStep = 'spread';
+                     // Vue의 반응성을 위해 nextTick 사용
+                     this.selectedCards = [...cards];  // 새 배열 생성
                      
-                     console.log('this.selectedCards 설정됨:', this.selectedCards);
-                     console.log('this.selectedCards 타입:', typeof this.selectedCards);
-                     console.log('this.selectedCards 길이:', this.selectedCards ? this.selectedCards.length : 'undefined');
-                     console.log('currentStep 변경 후:', this.currentStep);
-                     console.log('=== onCardSelectionComplete 완료 ===');
+                     // nextTick을 사용해서 DOM 업데이트 후 단계 변경
+                     this.$nextTick(() => {
+                         console.log('nextTick에서 currentStep 변경');
+                         this.currentStep = 'spread';
+                         
+                         console.log('this.selectedCards 설정됨:', this.selectedCards);
+                         console.log('this.selectedCards 타입:', typeof this.selectedCards);
+                         console.log('this.selectedCards 길이:', this.selectedCards ? this.selectedCards.length : 'undefined');
+                         console.log('currentStep 변경 후:', this.currentStep);
+                         console.log('=== onCardSelectionComplete 완료 ===');
+                     });
                  },
                 
                 async onStartReading() {
