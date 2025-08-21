@@ -445,6 +445,18 @@
                 <div class="section reading-result">
                     <h2>✨ 타로 리딩 결과</h2>
                     
+                    <!-- 디버깅 정보 -->
+                    <div style="background: #f0f0f0; padding: 10px; margin: 10px; border: 1px solid #ccc; font-family: monospace; font-size: 12px;">
+                        <p><strong>ReadingResult 디버깅 정보:</strong></p>
+                        <p>readingData props 타입: {{ typeof readingData }}</p>
+                        <p>readingData 존재 여부: {{ readingData ? '있음' : '없음' }}</p>
+                        <p v-if="readingData">readingData.cards 타입: {{ typeof readingData.cards }}</p>
+                        <p v-if="readingData">readingData.cards 길이: {{ readingData.cards ? readingData.cards.length : 'undefined' }}</p>
+                        <p v-if="readingData">readingData.cards 내용: {{ JSON.stringify(readingData.cards, null, 2) }}</p>
+                        <p v-if="readingData">readingData.purpose: {{ readingData.purpose }}</p>
+                        <p v-if="readingData">readingData.cardMeanings 길이: {{ readingData.cardMeanings ? readingData.cardMeanings.length : 'undefined' }}</p>
+                    </div>
+                    
                     <div v-if="readingData" class="result-content">
                         <div class="result-summary">
                             <h3>📋 리딩 요약</h3>
@@ -701,9 +713,9 @@
                         
                         console.log('생성된 해석:', { overallMeaning, advice });
                         
-                        // 리딩 결과 생성
+                        // 리딩 결과 생성 - selectedCards를 사용
                         this.readingData = {
-                            cards: cards,
+                            cards: selectedCards, // cards 대신 selectedCards 사용
                             purpose: this.selectedPurpose,
                             cardMeanings: cardMeanings,
                             combination: {
@@ -714,6 +726,8 @@
                         };
                         
                         console.log('리딩 데이터 생성 완료:', this.readingData);
+                        console.log('readingData.cards:', this.readingData.cards);
+                        console.log('readingData.cards 길이:', this.readingData.cards ? this.readingData.cards.length : 'undefined');
                         
                         this.currentStep = 'result';
                     } catch (error) {
