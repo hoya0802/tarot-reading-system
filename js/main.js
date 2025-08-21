@@ -124,19 +124,17 @@ createApp({
                 
                 const { cards, purpose } = readingData;
                 
-                // 그룹 정보 가져오기
-                const groups = cards.map(card => {
-                    if (card.group) {
-                        return card.group.name;
-                    } else if (card.suitGroup) {
-                        return card.suitGroup.name;
-                    }
-                    return 'general';
+                // 그룹 ID 가져오기
+                const groupIds = cards.map(card => {
+                    return card.groupId || 1; // 기본값으로 1 사용
                 });
+                
+                console.log('카드 그룹 IDs:', groupIds);
+                console.log('역방향 정보:', cards.map(c => c.reversed));
                 
                 // 목적별 그룹 조합 해석 조회
                 const combination = await this.tarotService.getPurposeCombination(
-                    groups[0], groups[1], groups[2],
+                    groupIds[0], groupIds[1], groupIds[2],
                     cards[0].reversed, cards[1].reversed, cards[2].reversed,
                     purpose
                 );
@@ -156,10 +154,14 @@ createApp({
                 this.readingResult = {
                     cards: cards,
                     purpose: purpose,
+                    purposeName: window.getPurposeName ? window.getPurposeName(purpose) : purpose,
                     combination: combination,
                     cardReadings: cardReadings,
-                    timestamp: new Date()
+                    timestamp: new Date(),
+                    specialInsight: combination.specialInsight
                 };
+                
+                console.log('리딩 결과:', this.readingResult);
                 
                 // 사용자 리딩 저장
                 if (this.isAuthenticated) {
