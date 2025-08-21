@@ -105,13 +105,13 @@
                     @selection-complete="onCardSelectionComplete">
                 </tarot-deck>
 
-                                 <!-- 카드 스프레드 -->
-                 <card-spread 
-                     v-if="currentStep === 'spread' && selectedCards && selectedCards.length > 0"
-                     :selectedCards="selectedCards"
-                     @start-reading="onStartReading"
-                     @reshuffle="onReshuffle">
-                 </card-spread>
+                                                  <!-- 카드 스프레드 -->
+                  <card-spread 
+                      v-if="currentStep === 'spread' && selectedCards && selectedCards.length > 0"
+                      :selectedCards="selectedCards"
+                      @start-reading="onStartReading()"
+                      @reshuffle="onReshuffle">
+                  </card-spread>
 
                 <!-- 리딩 결과 -->
                 <reading-result 
@@ -420,27 +420,46 @@
                      console.log(`카드 ${index} 방향:`, direction);
                      return direction;
                  },
-                 startReading() {
-                     console.log('CardSpread에서 리딩 시작 호출됨');
-                     console.log('this.localSelectedCards:', this.localSelectedCards);
-                     console.log('this.localSelectedCards 타입:', typeof this.localSelectedCards);
-                     console.log('this.localSelectedCards 길이:', this.localSelectedCards ? this.localSelectedCards.length : 'undefined');
-                     
-                     if (!this.localSelectedCards || !Array.isArray(this.localSelectedCards) || this.localSelectedCards.length === 0) {
-                         console.error('CardSpread: 선택된 카드가 없습니다!');
-                         console.error('localSelectedCards 상태:', this.localSelectedCards);
-                         alert('선택된 카드가 없습니다. 카드를 다시 선택해주세요.');
-                         return;
-                     }
-                     
-                     console.log('CardSpread에서 이벤트 발생:', this.localSelectedCards);
-                     this.$emit('start-reading', this.localSelectedCards);
-                 }
+                                 startReading() {
+                    console.log('=== CardSpread startReading 호출됨 ===');
+                    console.log('this.localSelectedCards:', this.localSelectedCards);
+                    console.log('this.localSelectedCards 타입:', typeof this.localSelectedCards);
+                    console.log('this.localSelectedCards 길이:', this.localSelectedCards ? this.localSelectedCards.length : 'undefined');
+                    
+                    if (!this.localSelectedCards || !Array.isArray(this.localSelectedCards) || this.localSelectedCards.length === 0) {
+                        console.error('CardSpread: 선택된 카드가 없습니다!');
+                        console.error('localSelectedCards 상태:', this.localSelectedCards);
+                        alert('선택된 카드가 없습니다. 카드를 다시 선택해주세요.');
+                        return;
+                    }
+                    
+                    console.log('CardSpread에서 이벤트 발생 전 데이터 확인:');
+                    console.log('전달할 카드들:', this.localSelectedCards);
+                    console.log('카드 1:', this.localSelectedCards[0]);
+                    console.log('카드 2:', this.localSelectedCards[1]);
+                    console.log('카드 3:', this.localSelectedCards[2]);
+                    
+                    // 이벤트 발생 (매개변수 없이)
+                    this.$emit('start-reading');
+                    console.log('=== CardSpread startReading 완료 ===');
+                }
              }
         };
 
         const ReadingResult = {
             props: ['readingData'],
+            mounted() {
+                console.log('=== ReadingResult 컴포넌트 마운트됨 ===');
+                console.log('readingData props:', this.readingData);
+                console.log('readingData 타입:', typeof this.readingData);
+                if (this.readingData) {
+                    console.log('readingData.cards:', this.readingData.cards);
+                    console.log('readingData.cards 길이:', this.readingData.cards ? this.readingData.cards.length : 'undefined');
+                    console.log('readingData.purpose:', this.readingData.purpose);
+                    console.log('readingData.cardMeanings:', this.readingData.cardMeanings);
+                }
+                console.log('=== ReadingResult 마운트 완료 ===');
+            },
             template: `
                 <div class="section reading-result">
                     <h2>✨ 타로 리딩 결과</h2>
@@ -455,6 +474,7 @@
                         <p v-if="readingData">readingData.cards 내용: {{ JSON.stringify(readingData.cards, null, 2) }}</p>
                         <p v-if="readingData">readingData.purpose: {{ readingData.purpose }}</p>
                         <p v-if="readingData">readingData.cardMeanings 길이: {{ readingData.cardMeanings ? readingData.cardMeanings.length : 'undefined' }}</p>
+                        <p v-if="readingData">readingData.combination: {{ JSON.stringify(readingData.combination, null, 2) }}</p>
                     </div>
                     
                     <div v-if="readingData" class="result-content">
@@ -667,27 +687,22 @@
                      console.log('=== onCardSelectionComplete 완료 ===');
                  },
                 
-                async onStartReading(cards) {
+                async onStartReading() {
                     try {
                         this.isLoading = true;
                         
-                        console.log('리딩 시작 - 선택된 카드들:', cards);
-                        console.log('선택된 목적:', this.selectedPurpose);
+                        console.log('=== onStartReading 호출됨 ===');
                         console.log('this.selectedCards:', this.selectedCards);
+                        console.log('this.selectedCards 길이:', this.selectedCards ? this.selectedCards.length : 'undefined');
+                        console.log('선택된 목적:', this.selectedPurpose);
                         
-                        // cards가 undefined인 경우 this.selectedCards 사용
-                        let selectedCards = cards;
-                        
-                        if (!selectedCards || !Array.isArray(selectedCards) || selectedCards.length === 0) {
-                            console.log('cards 매개변수가 유효하지 않음, this.selectedCards 사용');
-                            selectedCards = this.selectedCards;
-                        }
-                        
-                        if (!selectedCards || !Array.isArray(selectedCards) || selectedCards.length === 0) {
+                        // this.selectedCards 직접 사용
+                        if (!this.selectedCards || !Array.isArray(this.selectedCards) || this.selectedCards.length === 0) {
                             throw new Error('선택된 카드가 없습니다. 카드를 다시 선택해주세요.');
                         }
                         
-                        console.log('최종 사용할 카드들:', selectedCards);
+                        const selectedCards = this.selectedCards;
+                        console.log('사용할 카드들:', selectedCards);
                         
                         // 선택된 카드들의 실제 의미를 분석
                         const cardMeanings = selectedCards.map((card, index) => {
@@ -713,9 +728,9 @@
                         
                         console.log('생성된 해석:', { overallMeaning, advice });
                         
-                        // 리딩 결과 생성 - selectedCards를 사용
+                        // 리딩 결과 생성
                         this.readingData = {
-                            cards: selectedCards, // cards 대신 selectedCards 사용
+                            cards: selectedCards,
                             purpose: this.selectedPurpose,
                             cardMeanings: cardMeanings,
                             combination: {
@@ -728,6 +743,9 @@
                         console.log('리딩 데이터 생성 완료:', this.readingData);
                         console.log('readingData.cards:', this.readingData.cards);
                         console.log('readingData.cards 길이:', this.readingData.cards ? this.readingData.cards.length : 'undefined');
+                        console.log('readingData.purpose:', this.readingData.purpose);
+                        console.log('readingData.cardMeanings 길이:', this.readingData.cardMeanings ? this.readingData.cardMeanings.length : 'undefined');
+                        console.log('=== onStartReading 완료 ===');
                         
                         this.currentStep = 'result';
                     } catch (error) {
