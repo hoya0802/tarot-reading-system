@@ -1058,35 +1058,9 @@
                 
                 console.log('목적별 카드 해석:', cardReadings);
                 
-                // 목적별 조합 해석 조회
-                let combinationReading = null;
-                try {
-                    const { data, error } = await supabase
-                        .from('tarot_purpose_combinations')
-                        .select('*')
-                        .eq('group1_id', cardsWithGroups[0].groupId)
-                        .eq('group2_id', cardsWithGroups[1].groupId)
-                        .eq('group3_id', cardsWithGroups[2].groupId)
-                        .eq('group1_reversed', cardsWithGroups[0].reversed)
-                        .eq('group2_reversed', cardsWithGroups[1].reversed)
-                        .eq('group3_reversed', cardsWithGroups[2].reversed)
-                        .eq('purpose_type', selectedPurpose)
-                        .single();
-                    
-                    if (error) throw error;
-                    combinationReading = data;
-                    console.log('조합 해석 조회 성공:', combinationReading);
-                } catch (error) {
-                    console.error('조합 해석 조회 실패:', error);
-                    // 폴백 조합 해석
-                    combinationReading = {
-                        past_meaning: '과거의 경험이 현재 상황의 기반이 되고 있습니다.',
-                        present_meaning: '현재는 중요한 선택의 시기입니다.',
-                        future_meaning: '미래에는 새로운 가능성이 열릴 것입니다.',
-                        overall_meaning: generateOverallMeaning(cardReadings, selectedPurpose),
-                        advice: generateAdvice(cardReadings, selectedPurpose)
-                    };
-                }
+                // 조합 해석 동적 생성 (tarot_purpose_readings 기반)
+                let combinationReading = generateCombinationReading(cardReadings, selectedPurpose);
+                console.log('동적 조합 해석 생성 완료:', combinationReading);
                 
                 // 수치학적 조합 해석 적용
                 if (userBirthDate && lifePathNumber) {
@@ -1136,6 +1110,7 @@
 
         // === 목적별 특화 정보 추출 ===
         function getSpecialInsight(combinationData, purposeType) {
+            // 동적으로 생성된 특화 정보 반환
             switch (purposeType) {
                 case 'love':
                     return combinationData.love_insights;
@@ -1258,6 +1233,14 @@
                         daily: {
                             upright: "새로운 시작의 에너지가 가득합니다. 도전적인 일에 적극적으로 참여하세요.",
                             reversed: "성급한 결정을 피하고 신중하게 생각해보세요."
+                        },
+                        health: {
+                            upright: "활력과 에너지가 넘치는 시기입니다. 새로운 운동이나 건강 습관을 시작하기 좋은 때입니다.",
+                            reversed: "과도한 활동으로 인한 피로나 부상에 주의하세요. 적절한 휴식이 필요합니다."
+                        },
+                        money: {
+                            upright: "독립적인 재정 관리와 새로운 투자 기회가 있습니다. 자신의 판단을 믿고 도전하세요.",
+                            reversed: "성급한 투자 결정을 피하고 신중하게 계획을 세우세요."
                         }
                     },
                     2: {
@@ -1272,6 +1255,14 @@
                         daily: {
                             upright: "직감과 감수성이 예리한 날입니다. 내면의 목소리를 들어보세요.",
                             reversed: "우유부단함이 문제가 될 수 있습니다. 결정을 미루지 마세요."
+                        },
+                        health: {
+                            upright: "감정적 균형과 정신적 안정이 건강의 핵심입니다. 스트레스 관리에 신경 쓰세요.",
+                            reversed: "감정적 불안정이 신체 건강에 영향을 줄 수 있습니다. 마음의 평화를 찾으세요."
+                        },
+                        money: {
+                            upright: "협력적인 투자나 공동 재정 관리가 유리합니다. 신뢰할 수 있는 파트너와 함께하세요.",
+                            reversed: "재정적 의존이나 우유부단함이 기회를 놓치게 할 수 있습니다."
                         }
                     },
                     3: {
@@ -1286,6 +1277,14 @@
                         daily: {
                             upright: "긍정적인 에너지가 넘치는 날입니다. 주변 사람들과 즐거운 시간을 보내세요.",
                             reversed: "과도한 낙관이 현실을 놓치게 할 수 있습니다."
+                        },
+                        health: {
+                            upright: "활발한 사회 활동과 즐거운 운동이 건강에 도움이 됩니다. 다양한 활동을 시도해보세요.",
+                            reversed: "과도한 사교 활동이나 불규칙한 생활이 건강을 해칠 수 있습니다."
+                        },
+                        money: {
+                            upright: "창의적인 아이디어나 다양한 수입원을 통해 재정적 성공이 가능합니다.",
+                            reversed: "산만한 투자나 계획 없는 지출이 재정적 어려움을 만들 수 있습니다."
                         }
                     },
                     4: {
@@ -1300,6 +1299,14 @@
                         daily: {
                             upright: "안정과 질서가 중요한 날입니다. 계획을 세우고 체계적으로 진행하세요.",
                             reversed: "지나친 완벽주의가 스트레스를 만들 수 있습니다."
+                        },
+                        health: {
+                            upright: "규칙적인 생활과 꾸준한 운동이 건강의 기초입니다. 체계적인 건강 관리를 하세요.",
+                            reversed: "과도한 업무나 스트레스가 건강을 해칠 수 있습니다. 적절한 휴식을 취하세요."
+                        },
+                        money: {
+                            upright: "안정적이고 보수적인 투자가 장기적으로 좋은 결과를 가져올 것입니다.",
+                            reversed: "지나치게 보수적인 태도가 좋은 투자 기회를 놓치게 할 수 있습니다."
                         }
                     },
                     5: {
@@ -1314,6 +1321,14 @@
                         daily: {
                             upright: "자유와 모험이 가득한 날입니다. 새로운 경험을 추구하세요.",
                             reversed: "산만함이 집중을 방해할 수 있습니다."
+                        },
+                        health: {
+                            upright: "다양한 운동과 새로운 건강법을 시도해보는 것이 좋습니다. 변화가 활력을 가져다줄 것입니다.",
+                            reversed: "불규칙한 생활이나 과도한 변화가 건강에 해로울 수 있습니다."
+                        },
+                        money: {
+                            upright: "다양한 투자 기회와 새로운 수입원을 탐색해보세요. 변화가 기회를 만듭니다.",
+                            reversed: "성급한 투자나 변덕스러운 재정 관리가 손실을 가져올 수 있습니다."
                         }
                     },
                     6: {
@@ -1328,6 +1343,14 @@
                         daily: {
                             upright: "가족과 친구들과의 조화로운 시간이 중요한 날입니다.",
                             reversed: "타인을 위한 희생이 자신의 필요를 놓치게 할 수 있습니다."
+                        },
+                        health: {
+                            upright: "가족과의 시간, 사랑하는 사람들과의 관계가 정신 건강에 도움이 됩니다.",
+                            reversed: "타인을 돌보느라 자신의 건강을 소홀히 할 수 있습니다. 자기 관리도 중요합니다."
+                        },
+                        money: {
+                            upright: "가족을 위한 재정 계획이나 공동 투자가 좋은 결과를 가져올 것입니다.",
+                            reversed: "타인을 위한 과도한 지출이 재정적 어려움을 만들 수 있습니다."
                         }
                     },
                     7: {
@@ -1342,6 +1365,14 @@
                         daily: {
                             upright: "내면의 성찰과 영적 성장이 중요한 날입니다.",
                             reversed: "고립감이 외로움을 만들 수 있습니다."
+                        },
+                        health: {
+                            upright: "명상, 요가 등 정신적 수련이 건강에 큰 도움이 됩니다. 내면의 평화를 찾으세요.",
+                            reversed: "과도한 걱정이나 분석이 정신 건강에 해로울 수 있습니다."
+                        },
+                        money: {
+                            upright: "신중한 분석과 연구를 통한 투자가 좋은 결과를 가져올 것입니다.",
+                            reversed: "지나친 신중함이 좋은 기회를 놓치게 할 수 있습니다."
                         }
                     },
                     8: {
@@ -1356,7 +1387,15 @@
                         daily: {
                             upright: "성취와 보상이 중요한 날입니다. 목표를 향해 전진하세요.",
                             reversed: "물질적 욕구가 정신적 평화를 방해할 수 있습니다."
-                        }
+                        },
+                        health: {
+                            upright: "체력과 지구력이 좋은 시기입니다. 목표를 세우고 꾸준히 건강 관리를 하세요.",
+                            reversed: "과도한 업무나 스트레스가 건강을 해칠 수 있습니다. 균형을 찾으세요."
+                        },
+                        money: {
+                            upright: "재정적 성공과 물질적 풍요가 기대되는 시기입니다. 적극적으로 투자하세요.",
+                            reversed: "돈에 대한 집착이나 과도한 욕심이 문제를 만들 수 있습니다."
+                         }
                     },
                     9: {
                         love: {
@@ -1370,6 +1409,14 @@
                         daily: {
                             upright: "완성과 새로운 시작이 교차하는 의미 있는 날입니다.",
                             reversed: "과거에 얽매여 미래를 놓칠 수 있습니다."
+                        },
+                        health: {
+                            upright: "전체적인 건강 상태를 점검하고 새로운 건강 계획을 세우기 좋은 시기입니다.",
+                            reversed: "과거의 건강 습관이나 완벽주의가 새로운 건강법 시도를 방해할 수 있습니다."
+                        },
+                        money: {
+                            upright: "재정적 목표 달성과 새로운 투자 계획을 세우기 좋은 시기입니다.",
+                            reversed: "과거의 실패나 완벽주의가 새로운 재정 기회를 놓치게 할 수 있습니다."
                         }
                     }
                 };
@@ -1379,22 +1426,30 @@
                     '봄': {
                         love: "새로운 사랑의 시작과 성장의 계절입니다.",
                         career: "새로운 프로젝트와 성장의 기회가 찾아올 것입니다.",
-                        daily: "새로운 시작과 성장의 에너지가 가득한 날입니다."
+                        daily: "새로운 시작과 성장의 에너지가 가득한 날입니다.",
+                        health: "새로운 건강 습관을 시작하기 좋은 계절입니다. 활력이 넘치는 시기입니다.",
+                        money: "새로운 투자나 수입원을 개발하기 좋은 시기입니다."
                     },
                     '여름': {
                         love: "열정과 활력이 사랑을 뜨겁게 만듭니다.",
                         career: "열정과 에너지를 업무에 쏟아부을 수 있는 시기입니다.",
-                        daily: "활력과 열정이 넘치는 에너지 넘치는 날입니다."
+                        daily: "활력과 열정이 넘치는 에너지 넘치는 날입니다.",
+                        health: "활발한 야외 활동과 운동이 건강에 도움이 되는 계절입니다.",
+                        money: "적극적인 투자와 사업 확장에 좋은 시기입니다."
                     },
                     '가을': {
                         love: "성숙하고 깊이 있는 사랑의 의미를 발견하는 시기입니다.",
                         career: "수확과 성과를 확인할 수 있는 시기입니다.",
-                        daily: "성숙과 수확의 의미를 되새기는 날입니다."
+                        daily: "성숙과 수확의 의미를 되새기는 날입니다.",
+                        health: "건강 상태를 점검하고 겨울을 준비하는 시기입니다.",
+                        money: "투자 성과를 확인하고 재정 상태를 점검하는 시기입니다."
                     },
                     '겨울': {
                         love: "내면의 성찰을 통해 사랑의 본질을 이해하는 시기입니다.",
                         career: "계획과 준비의 시기로, 내년을 위한 기반을 다지세요.",
-                        daily: "내면의 성찰과 휴식이 중요한 날입니다."
+                        daily: "내면의 성찰과 휴식이 중요한 날입니다.",
+                        health: "휴식과 회복에 집중하고 면역력을 기르는 시기입니다.",
+                        money: "재정 계획을 세우고 보수적인 투자를 고려하는 시기입니다."
                     }
                 };
 
@@ -1426,47 +1481,65 @@
                     1: {
                         love: "리더십과 독립성이 사랑 관계에서 중요한 역할을 합니다. 솔직한 소통으로 진정한 연결을 만들어가세요.",
                         career: "창의적이고 혁신적인 접근이 커리어 성공의 열쇠입니다. 자신의 독특한 아이디어를 믿으세요.",
-                        daily: "새로운 시작과 도전의 에너지가 가득합니다. 적극적으로 변화를 추구하세요."
+                        daily: "새로운 시작과 도전의 에너지가 가득합니다. 적극적으로 변화를 추구하세요.",
+                        health: "활력과 에너지를 건강 관리에 집중하세요. 새로운 건강 습관을 주도적으로 시작하세요.",
+                        money: "독립적인 재정 관리와 혁신적인 투자 기회를 주도적으로 추구하세요."
                     },
                     2: {
                         love: "협력과 조화가 사랑의 핵심입니다. 상대방의 감정에 민감하게 반응하고 균형을 찾으세요.",
                         career: "팀워크와 협력이 성공의 기반입니다. 다른 사람들과의 소통을 중시하세요.",
-                        daily: "직감과 감수성이 예리한 날입니다. 내면의 목소리를 들어보세요."
+                        daily: "직감과 감수성이 예리한 날입니다. 내면의 목소리를 들어보세요.",
+                        health: "감정적 균형과 스트레스 관리를 통해 전체적인 건강을 돌보세요.",
+                        money: "협력적인 재정 관리와 신뢰할 수 있는 파트너와의 공동 투자를 고려하세요."
                     },
                     3: {
                         love: "창의성과 표현력이 사랑을 풍부하게 만듭니다. 즐거운 대화와 창의적인 데이트를 시도해보세요.",
                         career: "창의적인 아이디어가 인정받을 것입니다. 자신의 재능을 자유롭게 표현하세요.",
-                        daily: "긍정적인 에너지가 넘치는 날입니다. 주변 사람들과 즐거운 시간을 보내세요."
+                        daily: "긍정적인 에너지가 넘치는 날입니다. 주변 사람들과 즐거운 시간을 보내세요.",
+                        health: "다양한 활동과 사회적 건강 관리로 전체적인 웰빙을 추구하세요.",
+                        money: "창의적인 수입원 개발과 다양한 투자 기회를 통해 재정적 성공을 추구하세요."
                     },
                     4: {
                         love: "안정성과 신뢰가 관계의 기반입니다. 꾸준한 노력으로 깊고 의미 있는 사랑을 만들어가세요.",
                         career: "체계적이고 꾸준한 접근이 성공을 가져올 것입니다. 인내심을 가지고 목표를 향해 나아가세요.",
-                        daily: "안정과 질서가 중요한 날입니다. 계획을 세우고 체계적으로 진행하세요."
+                        daily: "안정과 질서가 중요한 날입니다. 계획을 세우고 체계적으로 진행하세요.",
+                        health: "규칙적이고 체계적인 건강 관리로 지속 가능한 웰빙을 구축하세요.",
+                        money: "안정적이고 장기적인 재정 계획으로 지속 가능한 부를 축적하세요."
                     },
                     5: {
                         love: "자유와 모험이 사랑에 새로운 활력을 불어넣습니다. 새로운 경험과 변화를 두려워하지 마세요.",
                         career: "변화와 새로운 기회가 찾아올 것입니다. 적응력을 발휘하고 유연하게 대응하세요.",
-                        daily: "자유와 모험이 가득한 날입니다. 새로운 경험을 추구하고 변화를 환영하세요."
+                        daily: "자유와 모험이 가득한 날입니다. 새로운 경험을 추구하고 변화를 환영하세요.",
+                        health: "다양한 건강 방법과 활동적인 라이프스타일로 역동적인 건강을 추구하세요.",
+                        money: "다각화된 투자와 새로운 수입원 개발로 재정적 자유를 추구하세요."
                     },
                     6: {
                         love: "사랑과 가족이 가장 중요한 가치입니다. 조화로운 관계를 만들어가고 타인을 돌보세요.",
                         career: "협력과 조화가 업무 성공의 핵심입니다. 팀워크를 중시하고 다른 사람들과 함께 성장하세요.",
-                        daily: "가족과 친구들과의 조화로운 시간이 중요한 날입니다. 타인을 위한 배려를 잊지 마세요."
+                        daily: "가족과 친구들과의 조화로운 시간이 중요한 날입니다. 타인을 위한 배려를 잊지 마세요.",
+                        health: "사랑하는 사람들과 함께하는 건강 활동을 통해 정신적 안정과 건강을 도모하세요.",
+                        money: "가족 중심의 재정 계획과 공동 투자를 통해 안정적인 부를 축적하세요."
                     },
                     7: {
                         love: "깊이 있는 소통과 영적 연결이 사랑을 의미 있게 만듭니다. 내면의 성찰을 통해 진정한 사랑을 발견하세요.",
                         career: "분석적 사고와 직관이 업무에서 큰 도움이 될 것입니다. 깊이 있는 연구와 성찰을 중시하세요.",
-                        daily: "내면의 성찰과 영적 성장이 중요한 날입니다. 조용한 시간을 가지며 자신을 돌아보세요."
+                        daily: "내면의 성찰과 영적 성장이 중요한 날입니다. 조용한 시간을 가지며 자신을 돌아보세요.",
+                        health: "명상과 요가 같은 정신적 수련을 통해 내면의 평화와 건강을 추구하세요.",
+                        money: "신중한 분석과 연구를 통한 장기적 투자 전략으로 안정적인 재정 성공을 추구하세요."
                     },
                     8: {
                         love: "물질적 안정과 감정적 성숙이 균형 잡힌 사랑을 만듭니다. 실용적이면서도 감정적으로 성숙한 관계를 추구하세요.",
                         career: "성취와 물질적 보상이 따를 것입니다. 야망을 가지고 도전하되, 윤리적 가치를 잊지 마세요.",
-                        daily: "성취와 보상이 중요한 날입니다. 목표를 향해 전진하고 자신의 가치를 인정받으세요."
+                        daily: "성취와 보상이 중요한 날입니다. 목표를 향해 전진하고 자신의 가치를 인정받으세요.",
+                        health: "목표 지향적이고 체계적인 건강 관리로 강한 체력과 지구력을 발전시키세요.",
+                        money: "야망과 전략을 통한 재정적 성취로 물질적 풍요와 안정을 동시에 추구하세요."
                     },
                     9: {
                         love: "완성과 새로운 시작의 순환 속에서 사랑의 의미를 발견하세요. 과거의 경험을 통해 성장하고 새로운 사랑을 준비하세요.",
                         career: "완성과 새로운 시작의 시기입니다. 과거의 경험을 활용하여 더 나은 미래를 만들어가세요.",
-                        daily: "완성과 새로운 시작이 교차하는 의미 있는 날입니다. 과거를 정리하고 미래를 준비하세요."
+                        daily: "완성과 새로운 시작이 교차하는 의미 있는 날입니다. 과거를 정리하고 미래를 준비하세요.",
+                        health: "전체적인 건강 점검과 새로운 건강 계획을 통해 완전한 웰빙을 추구하세요.",
+                        money: "재정적 목표의 완성과 새로운 투자 비전을 통해 지혜로운 부의 순환을 만들어가세요."
                     }
                 };
 
@@ -1492,47 +1565,65 @@
                 1: {
                     love: "자신의 독립성을 유지하면서도 상대방과의 조화를 찾으세요.",
                     career: "창의적인 아이디어를 믿고 리더십을 발휘하세요.",
-                    daily: "새로운 도전을 두려워하지 말고 적극적으로 참여하세요."
+                    daily: "새로운 도전을 두려워하지 말고 적극적으로 참여하세요.",
+                    health: "활력과 에너지를 건강 관리에 활용하세요. 새로운 운동을 시작해보세요.",
+                    money: "독립적인 재정 관리로 새로운 투자 기회를 모색하세요."
                 },
                 2: {
                     love: "상대방의 감정에 민감하게 반응하고 협력적인 태도를 유지하세요.",
                     career: "팀워크를 중시하고 다른 사람들과의 소통을 개선하세요.",
-                    daily: "직감을 믿고 내면의 목소리에 귀 기울이세요."
+                    daily: "직감을 믿고 내면의 목소리에 귀 기울이세요.",
+                    health: "감정적 균형과 스트레스 관리에 집중하세요. 마음의 평화가 건강의 핵심입니다.",
+                    money: "협력적인 투자나 신뢰할 수 있는 파트너와의 재정 관리를 고려하세요."
                 },
                 3: {
                     love: "창의적이고 즐거운 방식으로 사랑을 표현하세요.",
                     career: "자신의 재능을 자유롭게 표현하고 창의적인 접근을 시도하세요.",
-                    daily: "긍정적인 에너지를 주변 사람들과 나누세요."
+                    daily: "긍정적인 에너지를 주변 사람들과 나누세요.",
+                    health: "다양하고 즐거운 활동으로 건강을 관리하세요. 창의적인 운동을 시도해보세요.",
+                    money: "창의적인 아이디어나 다양한 수입원을 통해 재정적 성공을 추구하세요."
                 },
                 4: {
                     love: "안정성과 신뢰를 기반으로 한 꾸준한 노력을 기울이세요.",
                     career: "체계적이고 꾸준한 접근으로 목표를 달성하세요.",
-                    daily: "계획을 세우고 체계적으로 일을 진행하세요."
+                    daily: "계획을 세우고 체계적으로 일을 진행하세요.",
+                    health: "규칙적인 생활과 체계적인 건강 관리로 기초를 다지세요.",
+                    money: "안정적이고 보수적인 투자로 장기적인 재정 계획을 세우세요."
                 },
                 5: {
                     love: "자유와 모험을 추구하면서도 관계의 안정성을 유지하세요.",
                     career: "변화에 적응하고 새로운 기회를 포착하세요.",
-                    daily: "새로운 경험을 추구하고 변화를 환영하세요."
+                    daily: "새로운 경험을 추구하고 변화를 환영하세요.",
+                    health: "다양한 운동과 새로운 건강법을 시도하되 균형을 유지하세요.",
+                    money: "다양한 투자 기회를 탐색하되 신중하게 판단하세요."
                 },
                 6: {
                     love: "가족과 사랑을 중시하고 조화로운 관계를 만들어가세요.",
                     career: "협력과 조화를 통해 팀과 함께 성장하세요.",
-                    daily: "타인을 위한 배려와 사랑을 실천하세요."
+                    daily: "타인을 위한 배려와 사랑을 실천하세요.",
+                    health: "가족과 함께하는 건강 활동을 통해 정신적 안정을 찾으세요.",
+                    money: "가족을 위한 재정 계획이나 공동 투자를 고려하세요."
                 },
                 7: {
                     love: "깊이 있는 소통과 영적 연결을 추구하세요.",
                     career: "분석적 사고와 직관을 활용하여 깊이 있는 연구를 하세요.",
-                    daily: "내면의 성찰과 영적 성장에 시간을 투자하세요."
+                    daily: "내면의 성찰과 영적 성장에 시간을 투자하세요.",
+                    health: "명상이나 요가 등 정신적 수련을 통해 건강을 관리하세요.",
+                    money: "신중한 분석과 연구를 통한 투자 결정을 내리세요."
                 },
                 8: {
                     love: "물질적 안정과 감정적 성숙의 균형을 찾으세요.",
                     career: "성취와 보상을 추구하되 윤리적 가치를 잊지 마세요.",
-                    daily: "목표를 향해 전진하고 자신의 가치를 인정받으세요."
+                    daily: "목표를 향해 전진하고 자신의 가치를 인정받으세요.",
+                    health: "목표 지향적인 건강 관리로 체력과 지구력을 기르세요.",
+                    money: "적극적인 투자와 재정적 성공을 추구하되 균형을 유지하세요."
                 },
                 9: {
                     love: "과거의 경험을 통해 성장하고 새로운 사랑을 준비하세요.",
                     career: "과거의 경험을 활용하여 더 나은 미래를 만들어가세요.",
-                    daily: "과거를 정리하고 미래를 준비하는 시간을 가지세요."
+                    daily: "과거를 정리하고 미래를 준비하는 시간을 가지세요.",
+                    health: "전체적인 건강 상태를 점검하고 새로운 건강 계획을 세우세요.",
+                    money: "재정적 목표 달성과 새로운 투자 계획을 수립하세요."
                 }
             };
 
@@ -1543,6 +1634,117 @@
             }
             
             return baseAdvice;
+        }
+
+        // === 조합 해석 동적 생성 함수 ===
+        function generateCombinationReading(cardReadings, purpose) {
+            const positions = ['과거', '현재', '미래'];
+            
+            // 기본 조합 해석 생성
+            const combinationReading = {
+                past_meaning: cardReadings[0].meaning,
+                present_meaning: cardReadings[1].meaning,
+                future_meaning: cardReadings[2].meaning,
+                overall_meaning: generateOverallMeaning(cardReadings, purpose),
+                advice: generateAdvice(cardReadings, purpose)
+            };
+            
+            // 목적별 특화 정보 동적 생성
+            const specialInsights = generateSpecialInsights(cardReadings, purpose);
+            Object.assign(combinationReading, specialInsights);
+            
+            return combinationReading;
+        }
+        
+        // === 목적별 특화 정보 동적 생성 ===
+        function generateSpecialInsights(cardReadings, purpose) {
+            const insights = {};
+            
+            switch (purpose) {
+                case 'love':
+                    insights.love_insights = generateLoveInsights(cardReadings);
+                    break;
+                case 'career':
+                    insights.career_guidance = generateCareerGuidance(cardReadings);
+                    break;
+                case 'daily':
+                    insights.daily_focus = generateDailyFocus(cardReadings);
+                    break;
+                case 'health':
+                    insights.health_notes = generateHealthNotes(cardReadings);
+                    break;
+                case 'money':
+                    insights.money_outlook = generateMoneyOutlook(cardReadings);
+                    break;
+            }
+            
+            return insights;
+        }
+        
+        // === 목적별 특화 해석 생성 함수들 ===
+        function generateLoveInsights(cardReadings) {
+            const reversedCount = cardReadings.filter(card => card.isReversed).length;
+            const keywords = cardReadings.map(card => card.keywords).join(', ');
+            
+            if (reversedCount >= 2) {
+                return `현재 연애 상황에서 어려움이 있을 수 있습니다. ${keywords}의 에너지를 통해 관계의 문제점을 파악하고 개선해나가세요.`;
+            } else if (reversedCount === 1) {
+                return `연애에서 일부 어려움이 있지만, 전반적으로는 긍정적인 흐름입니다. ${keywords}의 조화를 통해 관계를 발전시켜 나가세요.`;
+            } else {
+                return `연애에 매우 긍정적인 에너지가 흐르고 있습니다. ${keywords}의 조합이 사랑의 성장을 이끌어낼 것입니다.`;
+            }
+        }
+        
+        function generateCareerGuidance(cardReadings) {
+            const reversedCount = cardReadings.filter(card => card.isReversed).length;
+            const keywords = cardReadings.map(card => card.keywords).join(', ');
+            
+            if (reversedCount >= 2) {
+                return `직장에서 도전적인 상황이 있을 수 있습니다. ${keywords}의 에너지를 통해 문제를 해결하고 성장의 기회로 활용하세요.`;
+            } else if (reversedCount === 1) {
+                return `업무에서 일부 어려움이 있지만, 전반적으로는 발전의 기회입니다. ${keywords}의 조합을 통해 커리어를 발전시켜 나가세요.`;
+            } else {
+                return `직장에서 매우 긍정적인 발전이 예상됩니다. ${keywords}의 조합이 성공과 성장을 이끌어낼 것입니다.`;
+            }
+        }
+        
+        function generateDailyFocus(cardReadings) {
+            const keywords = cardReadings.map(card => card.keywords).join(', ');
+            const reversedCount = cardReadings.filter(card => card.isReversed).length;
+            
+            if (reversedCount >= 2) {
+                return `오늘은 주의가 필요한 날입니다. ${keywords}의 에너지를 통해 어려움을 극복하고 성장의 기회로 삼으세요.`;
+            } else if (reversedCount === 1) {
+                return `오늘은 균형을 찾는 것이 중요한 날입니다. ${keywords}의 조화를 통해 하루를 의미 있게 보내세요.`;
+            } else {
+                return `오늘은 매우 긍정적인 에너지가 가득한 날입니다. ${keywords}의 조합을 통해 좋은 일들이 일어날 것입니다.`;
+            }
+        }
+        
+        function generateHealthNotes(cardReadings) {
+            const keywords = cardReadings.map(card => card.keywords).join(', ');
+            const reversedCount = cardReadings.filter(card => card.isReversed).length;
+            
+            if (reversedCount >= 2) {
+                return `건강에 주의가 필요한 시기입니다. ${keywords}의 에너지를 통해 건강 관리의 중요성을 인식하고 적극적으로 대응하세요.`;
+            } else if (reversedCount === 1) {
+                return `건강에 일부 주의가 필요하지만, 전반적으로는 양호합니다. ${keywords}의 조합을 통해 건강한 라이프스타일을 유지하세요.`;
+            } else {
+                return `건강에 매우 긍정적인 에너지가 흐르고 있습니다. ${keywords}의 조합이 건강과 웰빙을 증진시킬 것입니다.`;
+            }
+        }
+        
+        function generateMoneyOutlook(cardReadings) {
+            const keywords = cardReadings.map(card => card.keywords).join(', ');
+            const reversedCount = cardReadings.filter(card => card.isReversed).length;
+            
+            if (reversedCount >= 2) {
+                return `재정 상황에서 주의가 필요한 시기입니다. ${keywords}의 에너지를 통해 재정 관리를 신중하게 하고 위험을 피하세요.`;
+            } else if (reversedCount === 1) {
+                return `재정에 일부 어려움이 있지만, 전반적으로는 안정적입니다. ${keywords}의 조합을 통해 현명한 재정 결정을 내리세요.`;
+            } else {
+                return `재정에 매우 긍정적인 전망이 있습니다. ${keywords}의 조합이 재정적 성공과 안정을 가져올 것입니다.`;
+            }
         }
 
         // === 해석 생성 함수들 ===
