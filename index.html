@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>타로 리딩 시스템 v0.0.2</title>
+    <title>타로 리딩 시스템 v0.0.3</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/tarot.css">
 </head>
@@ -11,7 +11,7 @@
     <div id="app">
         <header class="header">
             <div class="container">
-                <h1>🔮 타로 리딩 시스템 <span class="version">v0.0.2</span></h1>
+                <h1>🔮 타로 리딩 시스템 <span class="version">v0.0.3</span></h1>
                 <p>당신의 운명을 읽어드립니다</p>
             </div>
         </header>
@@ -401,7 +401,7 @@
         import { NumerologyService } from './js/services/numerologyService.js';
         
         // === 버전 정보 ===
-        const APP_VERSION = '0.0.2';
+        const APP_VERSION = '0.0.3';
         
         // === 전역 변수들 ===
         let currentStep = 'birthDateInput';
@@ -705,7 +705,7 @@
         document.addEventListener('DOMContentLoaded', async function() {
             console.log('=== 애플리케이션 시작 ===');
             console.log('버전:', APP_VERSION);
-            console.log('최근 업데이트: 1장 리딩 핵심 메시지 개선');
+            console.log('최근 업데이트: 함수명 중복 오류 수정');
             
             // 생년월일 폼 초기화
             initializeBirthDateForm();
@@ -1684,7 +1684,7 @@
                 },
                 daily: {
                     title: '☀️ 오늘의 집중점',
-                    focus: generateDailyFocus(meaning, isReversed),
+                    focus: generateSingleDailyFocus(meaning, isReversed),
                     action: generateDailyAction(meaning, isReversed),
                     avoid: generateDailyAvoid(meaning, isReversed)
                 },
@@ -1720,7 +1720,7 @@
             return '직장에서 전문성과 리더십을 발휘할 수 있는 기회입니다. 자신의 능력을 믿고 도전하세요.';
         }
         
-        function generateDailyFocus(meaning, isReversed) {
+        function generateSingleDailyFocus(meaning, isReversed) {
             if (isReversed) {
                 return '오늘은 내면의 성찰과 관찰이 중요한 날입니다. 서두르지 말고 상황을 차분히 파악하세요.';
             }
