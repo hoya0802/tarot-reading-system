@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>타로 리딩 시스템 v0.0.3</title>
+    <title>타로 리딩 시스템 v0.0.4</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/tarot.css">
 </head>
@@ -11,7 +11,7 @@
     <div id="app">
         <header class="header">
             <div class="container">
-                <h1>🔮 타로 리딩 시스템 <span class="version">v0.0.3</span></h1>
+                <h1>🔮 타로 리딩 시스템 <span class="version">v0.0.4</span></h1>
                 <p>당신의 운명을 읽어드립니다</p>
             </div>
         </header>
@@ -401,7 +401,7 @@
         import { NumerologyService } from './js/services/numerologyService.js';
         
         // === 버전 정보 ===
-        const APP_VERSION = '0.0.3';
+        const APP_VERSION = '0.0.4';
         
         // === 전역 변수들 ===
         let currentStep = 'birthDateInput';
@@ -705,7 +705,7 @@
         document.addEventListener('DOMContentLoaded', async function() {
             console.log('=== 애플리케이션 시작 ===');
             console.log('버전:', APP_VERSION);
-            console.log('최근 업데이트: 함수명 중복 오류 수정');
+            console.log('최근 업데이트: 3장 리딩 카드 선택 함수 오류 수정');
             
             // 생년월일 폼 초기화
             initializeBirthDateForm();
@@ -903,13 +903,13 @@
             
             selectedCards.push(selectedCard);
             
-        // 전역 함수로 노출
-        window.selectRandomCard = selectRandomCard;
-            
             console.log('선택된 카드:', selectedCard.name, selectedCard.reversed ? '(역방향)' : '(정방향)');
             
             updateSelectedCardsDisplay();
         }
+        
+        // 전역 함수로 노출
+        window.selectRandomCard = selectRandomCard;
 
         // === 선택된 카드 표시 업데이트 ===
         function updateSelectedCardsDisplay() {
@@ -975,6 +975,11 @@
             updateSpreadDisplay();
             showSection('spread');
         }
+        
+        // 전역 함수로 노출
+        window.removeCard = removeCard;
+        window.resetSelection = resetSelection;
+        window.goToSpread = goToSpread;
 
         // === 스프레드 화면 업데이트 ===
         function updateSpreadDisplay() {
