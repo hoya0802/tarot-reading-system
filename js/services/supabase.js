@@ -1,10 +1,7 @@
 // Supabase 클라이언트 설정
-import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js';
-
-// 환경 변수 설정
-// ⚠️ 중요: 아래 값들을 실제 Supabase 프로젝트 정보로 변경하세요!
-const SUPABASE_URL = 'https://qcubdynkiawpcmsflxfu.supabase.co'; // Supabase 프로젝트 URL로 변경
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFjdWJkeW5raWF3cGNtc2ZseGZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI0MDgxNzUsImV4cCI6MjA2Nzk4NDE3NX0.c2dFWAcMq62druoosEYY2JaT5FOL--7V9qjCTtPUzi0'; // Supabase anon key로 변경
+// 전역 변수로 설정 (모듈 시스템 없이)
+const SUPABASE_URL = 'https://qcubdynkiawpcmsflxfu.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFjdWJkeW5raWF3cGNtc2ZseGZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI0MDgxNzUsImV4cCI6MjA2Nzk4NDE3NX0.c2dFWAcMq62druoosEYY2JaT5FOL--7V9qjCTtPUzi0';
 
 
 // 디버깅 정보 출력
@@ -18,51 +15,71 @@ if (SUPABASE_URL === 'YOUR_SUPABASE_PROJECT_URL' || SUPABASE_ANON_KEY === 'YOUR_
     console.error('js/services/supabase.js 파일에서 실제 URL과 API 키를 입력하세요.');
 }
 
-// Supabase 클라이언트 생성
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Supabase 클라이언트 생성 (전역 변수로)
+let supabase = null;
+
+// Supabase 초기화 함수
+async function initializeSupabase() {
+    try {
+        // 동적으로 Supabase 클라이언트 로드
+        const { createClient } = await import('https://cdn.skypack.dev/@supabase/supabase-js');
+        supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('Supabase 클라이언트 초기화 완료');
+        return true;
+    } catch (error) {
+        console.error('Supabase 클라이언트 초기화 실패:', error);
+        return false;
+    }
+}
 
 // 설정 확인 함수
-function checkSupabaseConnection() {
-    return new Promise(async (resolve, reject) => {
-        try {
-            console.log('Supabase 연결 테스트 시작...');
-            
-            // 기본 연결 테스트
-            const { data, error } = await supabase
-                .from('tarot_cards')
-                .select('count')
-                .limit(1);
-            
-            console.log('Supabase 응답:', { data, error });
-            
-            if (error) {
-                console.error('Supabase 연결 오류:', error);
-                
-                // 구체적인 오류 메시지
-                if (error.code === 'PGRST116') {
-                    console.error('오류: 잘못된 URL 또는 API 키');
-                } else if (error.code === 'PGRST301') {
-                    console.error('오류: 인증 실패');
-                } else if (error.message.includes('fetch')) {
-                    console.error('오류: 네트워크 연결 문제');
-                }
-                
-                reject(error);
-            } else {
-                console.log('Supabase 연결 성공');
-                resolve(true);
+async function checkSupabaseConnection() {
+    try {
+        console.log('Supabase 연결 테스트 시작...');
+        
+        // Supabase 클라이언트가 초기화되지 않았다면 초기화
+        if (!supabase) {
+            const initialized = await initializeSupabase();
+            if (!initialized) {
+                throw new Error('Supabase 클라이언트 초기화 실패');
             }
-        } catch (error) {
-            console.error('Supabase 연결 확인 실패:', error);
-            
-            // 추가 디버깅 정보
-            if (error.message.includes('fetch')) {
-                console.error('네트워크 오류 - CORS 또는 네트워크 문제일 수 있습니다.');
-            }
-            
-            reject(error);
         }
-    });
+        
+        // 기본 연결 테스트
+        const { data, error } = await supabase
+            .from('tarot_cards')
+            .select('count')
+            .limit(1);
+        
+        console.log('Supabase 응답:', { data, error });
+        
+        if (error) {
+            console.error('Supabase 연결 오류:', error);
+            
+            // 구체적인 오류 메시지
+            if (error.code === 'PGRST116') {
+                console.error('오류: 잘못된 URL 또는 API 키');
+            } else if (error.code === 'PGRST301') {
+                console.error('오류: 인증 실패');
+            } else if (error.message.includes('fetch')) {
+                console.error('오류: 네트워크 연결 문제');
+            }
+            
+            throw error;
+        } else {
+            console.log('Supabase 연결 성공');
+            return true;
+        }
+    } catch (error) {
+        console.error('Supabase 연결 확인 실패:', error);
+        
+        // 추가 디버깅 정보
+        if (error.message.includes('fetch')) {
+            console.error('네트워크 오류 - CORS 또는 네트워크 문제일 수 있습니다.');
+        }
+        
+        throw error;
+    }
 }
 
 // 설정 가이드 출력
@@ -89,6 +106,14 @@ async function simpleConnectionTest() {
     try {
         console.log('간단한 연결 테스트 시작...');
         
+        // Supabase 클라이언트가 초기화되지 않았다면 초기화
+        if (!supabase) {
+            const initialized = await initializeSupabase();
+            if (!initialized) {
+                return false;
+            }
+        }
+        
         // 가장 기본적인 테스트
         const { data, error } = await supabase
             .from('tarot_cards')
@@ -108,5 +133,8 @@ async function simpleConnectionTest() {
     }
 }
 
-export { checkSupabaseConnection, showSetupGuide, simpleConnectionTest };
-export default supabase;
+// 전역 함수로 노출 (모듈 시스템 없이)
+window.checkSupabaseConnection = checkSupabaseConnection;
+window.showSetupGuide = showSetupGuide;
+window.simpleConnectionTest = simpleConnectionTest;
+window.initializeSupabase = initializeSupabase;

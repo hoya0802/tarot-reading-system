@@ -1,10 +1,9 @@
-// 타로 서비스 클래스
-import supabase from './supabase.js';
-import { CardCache, findCardGroup, findSuitGroup, generateCombinationHash } from '../utils/cardUtils.js';
+// 타로 서비스 클래스 (전역 변수 사용)
+// supabase는 전역에서 접근
 
 class TarotService {
     constructor() {
-        this.cache = CardCache;
+        this.cache = new Map(); // 간단한 캐시
     }
 
     // 모든 카드 조회
@@ -16,22 +15,24 @@ class TarotService {
         }
 
         try {
-            const { data, error } = await supabase
+            // supabase가 초기화되지 않았다면 초기화
+            if (!window.supabase) {
+                await window.initializeSupabase();
+            }
+
+            const { data, error } = await window.supabase
                 .from('tarot_cards')
                 .select('*')
                 .order('id');
             
             if (error) throw error;
             
-            // 그룹 정보 추가
+            // 그룹 정보 추가 (간단한 버전)
             const cardsWithGroups = data.map(card => {
-                const group = findCardGroup(card.id);
-                const suitGroup = card.suit ? findSuitGroup(card.suit) : null;
-                
                 return {
                     ...card,
-                    group: group,
-                    suitGroup: suitGroup
+                    group: card.major_minor === 'major' ? 'major' : 'minor',
+                    suitGroup: card.suit || null
                 };
             });
             
@@ -48,7 +49,11 @@ class TarotService {
     // 모든 목적 조회
     async getAllPurposes() {
         try {
-            const { data, error } = await supabase
+            if (!window.supabase) {
+                await window.initializeSupabase();
+            }
+
+            const { data, error } = await window.supabase
                 .from('tarot_purposes')
                 .select('*')
                 .order('id');
@@ -64,7 +69,11 @@ class TarotService {
     // 목적별 카드 해석 조회
     async getPurposeReading(cardId, purposeType, isReversed = false) {
         try {
-            const { data, error } = await supabase
+            if (!window.supabase) {
+                await window.initializeSupabase();
+            }
+
+            const { data, error } = await window.supabase
                 .from('tarot_purpose_readings')
                 .select('*')
                 .eq('card_id', cardId)
@@ -88,7 +97,11 @@ class TarotService {
     // 목적별 그룹 조합 해석 조회
     async getPurposeCombination(group1Id, group2Id, group3Id, reversed1, reversed2, reversed3, purposeType) {
         try {
-            const { data, error } = await supabase
+            if (!window.supabase) {
+                await window.initializeSupabase();
+            }
+
+            const { data, error } = await window.supabase
                 .from('tarot_purpose_combinations')
                 .select('*')
                 .eq('group1_id', group1Id)
@@ -112,14 +125,18 @@ class TarotService {
     // 사용자 리딩 저장
     async saveUserReading(cardIds, reversedFlags, readingResult) {
         try {
-            const { data: { user } } = await supabase.auth.getUser();
+            if (!window.supabase) {
+                await window.initializeSupabase();
+            }
+
+            const { data: { user } } = await window.supabase.auth.getUser();
             
             if (!user) {
                 console.warn('사용자가 로그인되지 않았습니다.');
                 return null;
             }
 
-            const { data, error } = await supabase
+            const { data, error } = await window.supabase
                 .from('user_readings')
                 .insert({
                     user_id: user.id,
@@ -145,13 +162,17 @@ class TarotService {
     // 사용자 리딩 히스토리 조회
     async getUserReadings(limit = 10) {
         try {
-            const { data: { user } } = await supabase.auth.getUser();
+            if (!window.supabase) {
+                await window.initializeSupabase();
+            }
+
+            const { data: { user } } = await window.supabase.auth.getUser();
             
             if (!user) {
                 return [];
             }
 
-            const { data, error } = await supabase
+            const { data, error } = await window.supabase
                 .from('user_readings')
                 .select(`
                     *,
@@ -249,11 +270,15 @@ class TarotService {
     // 카드 이미지 업로드
     async uploadCardImage(file, cardId, cardType) {
         try {
+            if (!window.supabase) {
+                await window.initializeSupabase();
+            }
+
             const fileExt = file.name.split('.').pop();
             const fileName = `${cardId}.${fileExt}`;
             const filePath = `cards/${cardType}/${fileName}`;
             
-            const { data, error } = await supabase.storage
+            const { data, error } = await window.supabase.storage
                 .from('tarot-images')
                 .upload(filePath, file, {
                     cacheControl: '3600',
@@ -263,7 +288,7 @@ class TarotService {
             if (error) throw error;
             
             // 공개 URL 반환
-            const { data: { publicUrl } } = supabase.storage
+            const { data: { publicUrl } } = window.supabase.storage
                 .from('tarot-images')
                 .getPublicUrl(filePath);
             
@@ -276,7 +301,11 @@ class TarotService {
 
     // 카드 이미지 URL 조회
     getCardImageUrl(cardId, cardType, size = 'medium') {
-        return supabase.storage
+        if (!window.supabase) {
+            return null;
+        }
+        
+        return window.supabase.storage
             .from('tarot-images')
             .getPublicUrl(`cards/${cardType}/${cardId}-${size}.webp`)
             .data.publicUrl;
@@ -285,7 +314,11 @@ class TarotService {
     // 인증 상태 확인
     async checkAuth() {
         try {
-            const { data: { user } } = await supabase.auth.getUser();
+            if (!window.supabase) {
+                await window.initializeSupabase();
+            }
+
+            const { data: { user } } = await window.supabase.auth.getUser();
             return !!user;
         } catch (error) {
             console.error('인증 상태 확인 실패:', error);
@@ -296,7 +329,11 @@ class TarotService {
     // 로그인
     async signIn(email, password) {
         try {
-            const { data, error } = await supabase.auth.signInWithPassword({
+            if (!window.supabase) {
+                await window.initializeSupabase();
+            }
+
+            const { data, error } = await window.supabase.auth.signInWithPassword({
                 email,
                 password
             });
@@ -312,7 +349,11 @@ class TarotService {
     // 로그아웃
     async signOut() {
         try {
-            const { error } = await supabase.auth.signOut();
+            if (!window.supabase) {
+                await window.initializeSupabase();
+            }
+
+            const { error } = await window.supabase.auth.signOut();
             if (error) throw error;
         } catch (error) {
             console.error('로그아웃 실패:', error);
@@ -323,7 +364,11 @@ class TarotService {
     // 회원가입
     async signUp(email, password) {
         try {
-            const { data, error } = await supabase.auth.signUp({
+            if (!window.supabase) {
+                await window.initializeSupabase();
+            }
+
+            const { data, error } = await window.supabase.auth.signUp({
                 email,
                 password
             });
@@ -338,7 +383,12 @@ class TarotService {
 
     // 실시간 구독 설정
     setupRealtimeSubscription(table, callback) {
-        return supabase
+        if (!window.supabase) {
+            console.error('Supabase가 초기화되지 않았습니다.');
+            return null;
+        }
+
+        return window.supabase
             .channel(`${table}_changes`)
             .on('postgres_changes', 
                 { event: '*', schema: 'public', table: table },
@@ -350,14 +400,18 @@ class TarotService {
     // 사용자 리딩 삭제
     async deleteUserReading(readingId) {
         try {
-            const { data: { user } } = await supabase.auth.getUser();
+            if (!window.supabase) {
+                await window.initializeSupabase();
+            }
+
+            const { data: { user } } = await window.supabase.auth.getUser();
             
             if (!user) {
                 console.warn('사용자가 로그인되지 않았습니다.');
                 return false;
             }
 
-            const { error } = await supabase
+            const { error } = await window.supabase
                 .from('user_readings')
                 .delete()
                 .eq('id', readingId)
@@ -375,7 +429,7 @@ class TarotService {
 // TarotService 인스턴스 생성
 const tarotService = new TarotService();
 
-// 편의 함수들
+// 편의 함수들 (전역으로 노출)
 async function loadCards() {
     return await tarotService.getAllCards();
 }
@@ -384,4 +438,8 @@ async function loadPurposes() {
     return await tarotService.getAllPurposes();
 }
 
-export { TarotService, tarotService, loadCards, loadPurposes };
+// 전역 함수로 노출
+window.TarotService = TarotService;
+window.tarotService = tarotService;
+window.loadCards = loadCards;
+window.loadPurposes = loadPurposes;
