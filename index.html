@@ -258,11 +258,86 @@
                 
                 if (error) throw error;
                 
-                console.log('카드 데이터 로드 완료:', data.length, '장');
-                return data;
+                // 카드에 그룹 정보 추가
+                const cardsWithGroups = data.map(card => {
+                    let groupId = null;
+                    let groupName = null;
+                    
+                    if (card.major_minor === 'major') {
+                        // 메이저 아르카나 그룹 매핑
+                        const majorGroups = {
+                            0: { id: 1, name: 'new_beginnings' },
+                            1: { id: 1, name: 'new_beginnings' },
+                            2: { id: 1, name: 'new_beginnings' },
+                            6: { id: 2, name: 'relationships' },
+                            11: { id: 2, name: 'relationships' },
+                            14: { id: 2, name: 'relationships' },
+                            13: { id: 3, name: 'transformation' },
+                            16: { id: 3, name: 'transformation' },
+                            20: { id: 3, name: 'transformation' },
+                            3: { id: 4, name: 'material_world' },
+                            4: { id: 4, name: 'material_world' },
+                            5: { id: 4, name: 'material_world' },
+                            7: { id: 5, name: 'spiritual_journey' },
+                            8: { id: 5, name: 'spiritual_journey' },
+                            9: { id: 5, name: 'spiritual_journey' },
+                            10: { id: 6, name: 'completion' },
+                            12: { id: 6, name: 'completion' },
+                            15: { id: 6, name: 'completion' },
+                            17: { id: 6, name: 'completion' },
+                            18: { id: 6, name: 'completion' },
+                            19: { id: 6, name: 'completion' },
+                            21: { id: 6, name: 'completion' }
+                        };
+                        const group = majorGroups[card.id] || { id: 6, name: 'completion' };
+                        groupId = group.id;
+                        groupName = group.name;
+                    } else {
+                        // 마이너 아르카나 수트 매핑
+                        const suitGroups = {
+                            'wands': { id: 7, name: 'wands' },
+                            'cups': { id: 8, name: 'cups' },
+                            'swords': { id: 9, name: 'swords' },
+                            'pentacles': { id: 10, name: 'pentacles' }
+                        };
+                        const group = suitGroups[card.suit] || { id: 7, name: 'wands' };
+                        groupId = group.id;
+                        groupName = group.name;
+                    }
+                    
+                    return {
+                        ...card,
+                        groupId,
+                        groupName,
+                        displayName: formatCardName(card)
+                    };
+                });
+                
+                console.log('카드 데이터 로드 완료:', cardsWithGroups.length, '장');
+                return cardsWithGroups;
             } catch (error) {
                 console.error('카드 데이터 가져오기 실패:', error);
                 throw error;
+            }
+        }
+
+        // === 카드 이름 포맷팅 ===
+        function formatCardName(card) {
+            if (card.major_minor === 'major') {
+                return card.name;
+            } else {
+                const numberNames = {
+                    1: 'Ace', 2: 'Two', 3: 'Three', 4: 'Four', 5: 'Five',
+                    6: 'Six', 7: 'Seven', 8: 'Eight', 9: 'Nine', 10: 'Ten',
+                    11: 'Page', 12: 'Knight', 13: 'Queen', 14: 'King'
+                };
+                const suitNames = {
+                    'wands': 'Wands',
+                    'cups': 'Cups', 
+                    'swords': 'Swords',
+                    'pentacles': 'Pentacles'
+                };
+                return `${numberNames[card.number]} of ${suitNames[card.suit]}`;
             }
         }
 
@@ -484,30 +559,115 @@
             try {
                 showLoading(true);
                 
-                // 카드 의미 분석
-                const cardMeanings = selectedCards.map((card, index) => ({
-                    name: card.name,
-                    position: ['과거', '현재', '미래'][index],
-                    meaning: card.reversed ? card.reversed_meaning : card.upright_meaning,
-                    keywords: card.keywords,
-                    isReversed: card.reversed
-                }));
+                // 카드에 그룹 정보 추가
+                const cardsWithGroups = selectedCards.map(card => {
+                    let groupId = null;
+                    
+                    if (card.major_minor === 'major') {
+                        // 메이저 아르카나 그룹 매핑
+                        const majorGroups = {
+                            0: 1, 1: 1, 2: 1,  // new_beginnings
+                            6: 2, 11: 2, 14: 2, // relationships  
+                            13: 3, 16: 3, 20: 3, // transformation
+                            3: 4, 4: 4, 5: 4,   // material_world
+                            7: 5, 8: 5, 9: 5,   // spiritual_journey
+                            10: 6, 12: 6, 15: 6, 17: 6, 18: 6, 19: 6, 21: 6 // completion
+                        };
+                        groupId = majorGroups[card.id] || 6;
+                    } else {
+                        // 마이너 아르카나 수트 매핑
+                        const suitGroups = {
+                            'wands': 7,
+                            'cups': 8, 
+                            'swords': 9,
+                            'pentacles': 10
+                        };
+                        groupId = suitGroups[card.suit] || 7;
+                    }
+                    
+                    return { ...card, groupId };
+                });
                 
-                console.log('카드 의미 분석:', cardMeanings);
+                console.log('그룹 정보가 추가된 카드들:', cardsWithGroups);
                 
-                // 전체 해석 생성
-                const overallMeaning = generateOverallMeaning(cardMeanings, selectedPurpose);
-                const advice = generateAdvice(cardMeanings, selectedPurpose);
+                // 목적별 개별 카드 해석 조회
+                const cardReadings = await Promise.all(
+                    cardsWithGroups.map(async (card) => {
+                        try {
+                            const { data, error } = await supabase
+                                .from('tarot_purpose_readings')
+                                .select('*')
+                                .eq('card_id', card.id)
+                                .eq('purpose_type', selectedPurpose)
+                                .single();
+                            
+                            if (error) throw error;
+                            
+                            return {
+                                name: card.name,
+                                position: ['과거', '현재', '미래'][cardsWithGroups.indexOf(card)],
+                                meaning: card.reversed ? data.reversed_meaning : data.upright_meaning,
+                                keywords: data.keywords,
+                                advice: data.advice,
+                                isReversed: card.reversed
+                            };
+                        } catch (error) {
+                            console.error('개별 카드 해석 조회 실패:', error);
+                            // 폴백 해석
+                            return {
+                                name: card.name,
+                                position: ['과거', '현재', '미래'][cardsWithGroups.indexOf(card)],
+                                meaning: card.reversed ? card.reversed_meaning : card.upright_meaning,
+                                keywords: card.keywords,
+                                advice: '현재 상황을 잘 관찰하고 신중하게 판단하세요.',
+                                isReversed: card.reversed
+                            };
+                        }
+                    })
+                );
+                
+                console.log('목적별 카드 해석:', cardReadings);
+                
+                // 목적별 조합 해석 조회
+                let combinationReading = null;
+                try {
+                    const { data, error } = await supabase
+                        .from('tarot_purpose_combinations')
+                        .select('*')
+                        .eq('group1_id', cardsWithGroups[0].groupId)
+                        .eq('group2_id', cardsWithGroups[1].groupId)
+                        .eq('group3_id', cardsWithGroups[2].groupId)
+                        .eq('group1_reversed', cardsWithGroups[0].reversed)
+                        .eq('group2_reversed', cardsWithGroups[1].reversed)
+                        .eq('group3_reversed', cardsWithGroups[2].reversed)
+                        .eq('purpose_type', selectedPurpose)
+                        .single();
+                    
+                    if (error) throw error;
+                    combinationReading = data;
+                    console.log('조합 해석 조회 성공:', combinationReading);
+                } catch (error) {
+                    console.error('조합 해석 조회 실패:', error);
+                    // 폴백 조합 해석
+                    combinationReading = {
+                        past_meaning: '과거의 경험이 현재 상황의 기반이 되고 있습니다.',
+                        present_meaning: '현재는 중요한 선택의 시기입니다.',
+                        future_meaning: '미래에는 새로운 가능성이 열릴 것입니다.',
+                        overall_meaning: generateOverallMeaning(cardReadings, selectedPurpose),
+                        advice: generateAdvice(cardReadings, selectedPurpose)
+                    };
+                }
+                
+                // 목적별 특화 정보 추출
+                const specialInsight = getSpecialInsight(combinationReading, selectedPurpose);
                 
                 // 리딩 데이터 생성
                 readingData = {
-                    cards: selectedCards,
+                    cards: cardsWithGroups,
                     purpose: selectedPurpose,
-                    cardMeanings: cardMeanings,
-                    combination: {
-                        overall_meaning: overallMeaning,
-                        advice: advice
-                    },
+                    cardReadings: cardReadings,
+                    combination: combinationReading,
+                    specialInsight: specialInsight,
                     timestamp: new Date()
                 };
                 
@@ -524,6 +684,24 @@
             }
         }
 
+        // === 목적별 특화 정보 추출 ===
+        function getSpecialInsight(combinationData, purposeType) {
+            switch (purposeType) {
+                case 'love':
+                    return combinationData.love_insights;
+                case 'career':
+                    return combinationData.career_guidance;
+                case 'daily':
+                    return combinationData.daily_focus;
+                case 'health':
+                    return combinationData.health_notes;
+                case 'money':
+                    return combinationData.money_outlook;
+                default:
+                    return null;
+            }
+        }
+
         // === 결과 화면 업데이트 ===
         function updateResultDisplay() {
             console.log('=== 결과 화면 업데이트 ===');
@@ -531,27 +709,66 @@
             // 디버깅 정보 업데이트
             document.getElementById('resultDebugCardCount').textContent = selectedCards.length;
             document.getElementById('resultDebugPurpose').textContent = selectedPurpose || '없음';
-            document.getElementById('resultDebugMeanings').textContent = readingData.cardMeanings.length;
+            document.getElementById('resultDebugMeanings').textContent = readingData.cardReadings.length;
             
             // 해석 결과 표시
-            document.getElementById('overallMeaning').textContent = readingData.combination.overall_meaning;
+            document.getElementById('overallMeaning').innerHTML = `
+                <div class="reading-sections">
+                    <div class="reading-section">
+                        <h4>📖 과거</h4>
+                        <p>${readingData.combination.past_meaning}</p>
+                    </div>
+                    <div class="reading-section">
+                        <h4>🎯 현재</h4>
+                        <p>${readingData.combination.present_meaning}</p>
+                    </div>
+                    <div class="reading-section">
+                        <h4>🔮 미래</h4>
+                        <p>${readingData.combination.future_meaning}</p>
+                    </div>
+                    <div class="reading-section full-width">
+                        <h4>🌟 전체적인 해석</h4>
+                        <p>${readingData.combination.overall_meaning}</p>
+                    </div>
+                    ${readingData.specialInsight ? `
+                        <div class="reading-section full-width purpose-specific">
+                            <h4>${getPurposeSpecificTitle(selectedPurpose)}</h4>
+                            <p>${readingData.specialInsight}</p>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+            
             document.getElementById('advice').textContent = readingData.combination.advice;
             
             // 카드 상세 정보 표시
             const cardsList = document.getElementById('resultCardsList');
             cardsList.innerHTML = '';
             
-            readingData.cardMeanings.forEach((cardMeaning, index) => {
+            readingData.cardReadings.forEach((cardReading, index) => {
                 const cardDiv = document.createElement('div');
                 cardDiv.className = 'card-detail';
                 cardDiv.innerHTML = `
-                    <h4>${cardMeaning.position}: ${cardMeaning.name}</h4>
-                    <p class="card-direction">${cardMeaning.isReversed ? '역방향' : '정방향'}</p>
-                    <p class="card-meaning">${cardMeaning.meaning}</p>
-                    <p class="card-keywords">키워드: ${cardMeaning.keywords}</p>
+                    <h4>${cardReading.position}: ${cardReading.name}</h4>
+                    <p class="card-direction">${cardReading.isReversed ? '역방향' : '정방향'}</p>
+                    <p class="card-meaning">${cardReading.meaning}</p>
+                    <p class="card-keywords">키워드: ${cardReading.keywords}</p>
+                    <p class="card-advice">조언: ${cardReading.advice}</p>
                 `;
                 cardsList.appendChild(cardDiv);
             });
+        }
+
+        // === 목적별 특화 제목 ===
+        function getPurposeSpecificTitle(purposeType) {
+            const titles = {
+                'love': '💕 연애 특별 조언',
+                'career': '💼 직장 가이드',
+                'daily': '☀️ 오늘의 집중점',
+                'health': '🌿 건강 주의사항',
+                'money': '💰 금전 전망'
+            };
+            return titles[purposeType] || '특별 조언';
         }
 
         // === 해석 생성 함수들 ===
