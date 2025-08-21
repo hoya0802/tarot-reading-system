@@ -3,808 +3,429 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🔮 타로 리딩 시스템</title>
-    
-    <!-- CSS 파일 -->
+    <title>타로 리딩 시스템</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/tarot.css">
-    
-    <!-- Vue.js -->
-    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
-    
-    <!-- Favicon -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔮</text></svg>">
-    
-    <!-- 디버깅용 스타일 -->
-    <style>
-        .debug-info {
-            background: #f0f0f0;
-            padding: 10px;
-            margin: 10px;
-            border: 1px solid #ccc;
-            font-family: monospace;
-            font-size: 12px;
-        }
-        .error {
-            background: #ffebee;
-            color: #c62828;
-            padding: 10px;
-            margin: 10px;
-            border: 1px solid #ef5350;
-        }
-        .success {
-            background: #e8f5e8;
-            color: #2e7d32;
-            padding: 10px;
-            margin: 10px;
-            border: 1px solid #66bb6a;
-        }
-    </style>
 </head>
 <body>
-    <!-- 기본 테스트 메시지 -->
-    <div class="debug-info">
-        <h3>🔮 타로 리딩 시스템 - 기본 테스트</h3>
-        <p>이 페이지가 보인다면 기본 HTML은 정상 작동합니다.</p>
-        <p>현재 시간: <span id="current-time"></span></p>
-        <p>Vue.js 로딩 상태: <span id="vue-status">확인 중...</span></p>
-        <p>CSS 로딩 상태: <span id="css-status">확인 중...</span></p>
-    </div>
-
     <div id="app">
-        <!-- 로딩 화면 -->
-        <div v-if="isLoading" class="loading-screen">
-            <div class="loading-content">
-                <div class="loading-spinner"></div>
-                <h2>타로 리딩 시스템 로딩 중...</h2>
-                <p>{{ loadingMessage }}</p>
-            </div>
-        </div>
-
-        <!-- 설정 안내 화면 -->
-        <div v-if="showSetupGuide" class="setup-guide">
-            <div class="setup-content">
-                <h1>🔮 타로 리딩 시스템 설정</h1>
-                <div class="setup-steps">
-                    <h3>설정 단계:</h3>
-                    <ol>
-                        <li>Supabase 프로젝트를 생성하세요</li>
-                        <li>데이터베이스 스키마를 설정하세요</li>
-                        <li>Supabase 연결 정보를 입력하세요</li>
-                        <li>페이지를 새로고침하세요</li>
-                    </ol>
-                </div>
-                <div class="setup-help">
-                    <h3>도움이 필요하신가요?</h3>
-                    <p>README.md 파일을 참고하여 설정을 완료해주세요.</p>
-                    <button @click="checkConnection" class="btn btn-primary">연결 확인</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- 메인 애플리케이션 -->
-        <div v-if="!isLoading && !showSetupGuide" class="main-app">
-            <!-- 헤더 -->
-            <header class="app-header">
+        <header class="header">
+            <div class="container">
                 <h1>🔮 타로 리딩 시스템</h1>
-                <p>당신의 운명을 카드로 읽어보세요</p>
-            </header>
+                <p>당신의 운명을 읽어드립니다</p>
+            </div>
+        </header>
 
-            <!-- 메인 컨텐츠 -->
-            <main class="app-main">
+        <main class="main">
+            <div class="container">
+                <!-- 로딩 화면 -->
+                <div id="loading" class="section loading" style="display: none;">
+                    <div class="loading-spinner"></div>
+                    <p>로딩 중...</p>
+                </div>
+
+                <!-- 설정 가이드 -->
+                <div id="setup" class="section setup" style="display: none;">
+                    <h2>🔧 설정이 필요합니다</h2>
+                    <p>Supabase 연결을 확인해주세요.</p>
+                    <button onclick="testConnection()" class="btn btn-primary">연결 확인</button>
+                </div>
+
                 <!-- 목적 선택 -->
-                <purpose-selector 
-                    v-if="currentStep === 'purpose'"
-                    @purpose-selected="onPurposeSelected">
-                </purpose-selector>
-
-                <!-- 타로 덱 -->
-                <tarot-deck 
-                    v-if="currentStep === 'deck'"
-                    :cards="cards"
-                    @selection-complete="onCardSelectionComplete">
-                </tarot-deck>
-
-                                                  <!-- 카드 스프레드 -->
-                  <card-spread 
-                      v-if="currentStep === 'spread' && selectedCards && selectedCards.length > 0"
-                      :selectedCards="selectedCards"
-                      @start-reading="onStartReading()"
-                      @reshuffle="onReshuffle">
-                  </card-spread>
-
-                <!-- 리딩 결과 -->
-                <reading-result 
-                    v-if="currentStep === 'result'"
-                    :readingData="readingData"
-                    @new-reading="onNewReading">
-                </reading-result>
-
-                <!-- 사용자 히스토리 -->
-                <user-history 
-                    v-if="currentStep === 'history'"
-                    @back-to-main="currentStep = 'purpose'">
-                </user-history>
-            </main>
-
-            <!-- 네비게이션 -->
-            <nav class="app-nav">
-                <button @click="currentStep = 'purpose'" class="nav-btn">🏠 홈</button>
-                <button @click="currentStep = 'history'" class="nav-btn">📚 히스토리</button>
-                <button @click="showConnectionStatus" class="nav-btn">🔗 연결 상태</button>
-            </nav>
-        </div>
-    </div>
-
-    <!-- 메인 애플리케이션 스크립트 -->
-    <script type="module">
-        import supabase, { checkSupabaseConnection, showSetupGuide, simpleConnectionTest } from './js/services/supabase.js';
-        import { loadCards, tarotService } from './js/services/tarotService.js';
-
-        const { createApp } = Vue;
-
-        // Vue 컴포넌트들 정의
-        const PurposeSelector = {
-            props: ['selectedPurpose'],
-            data() {
-                return {
-                    purposes: [
-                        { code: 'love', name: '연애/사랑', icon: '💕', color: '#ff6b6b', description: '사랑과 관계에 관한 해석' },
-                        { code: 'career', name: '직장/일', icon: '💼', color: '#4ecdc4', description: '직장과 업무에 관한 해석' },
-                        { code: 'daily', name: '오늘의 운세', icon: '☀️', color: '#45b7d1', description: '오늘 하루의 전반적인 운세' },
-                        { code: 'health', name: '건강', icon: '🌿', color: '#96ceb4', description: '건강과 웰빙에 관한 해석' },
-                        { code: 'money', name: '금전', icon: '💰', color: '#feca57', description: '재정과 돈에 관한 해석' }
-                    ]
-                };
-            },
-            template: `
-                <div class="section purpose-selector">
-                    <h2>🔮 리딩 목적을 선택하세요</h2>
-                    <p class="text-center mb-3">어떤 분야에 대해 궁금한가요?</p>
-                    
+                <div id="purpose" class="section purpose-selector">
+                    <h2>🎯 리딩 목적을 선택하세요</h2>
                     <div class="purpose-grid">
-                        <div 
-                            v-for="purpose in purposes" 
-                            :key="purpose.code"
-                            class="purpose-item"
-                            :class="{ 'selected': selectedPurpose === purpose.code }"
-                            :style="{ borderColor: purpose.color }"
-                            @click="$emit('purpose-selected', purpose.code)">
-                            
-                            <div class="purpose-icon">{{ purpose.icon }}</div>
-                            <div class="purpose-name">{{ purpose.name }}</div>
-                            <div class="purpose-description">{{ purpose.description }}</div>
-                            
-                            <div v-if="selectedPurpose === purpose.code" class="selected-indicator">
-                                ✓ 선택됨
-                            </div>
-                        </div>
+                        <button class="purpose-card" onclick="selectPurpose('love')">
+                            <div class="purpose-icon">💕</div>
+                            <h3>사랑과 관계</h3>
+                            <p>연인, 가족, 친구와의 관계를 알아보세요</p>
+                        </button>
+                        <button class="purpose-card" onclick="selectPurpose('career')">
+                            <div class="purpose-icon">💼</div>
+                            <h3>직장과 업무</h3>
+                            <p>커리어와 업무 상황을 점검해보세요</p>
+                        </button>
+                        <button class="purpose-card" onclick="selectPurpose('daily')">
+                            <div class="purpose-icon">🌟</div>
+                            <h3>오늘의 운세</h3>
+                            <p>오늘 하루의 운세를 확인해보세요</p>
+                        </button>
+                        <button class="purpose-card" onclick="selectPurpose('health')">
+                            <div class="purpose-icon">🏥</div>
+                            <h3>건강과 웰빙</h3>
+                            <p>건강과 웰빙 상태를 살펴보세요</p>
+                        </button>
+                        <button class="purpose-card" onclick="selectPurpose('money')">
+                            <div class="purpose-icon">💰</div>
+                            <h3>재정과 돈</h3>
+                            <p>재정 상황과 투자를 점검해보세요</p>
+                        </button>
                     </div>
                 </div>
-            `
-        };
 
-        const TarotDeck = {
-            props: ['cards'],
-            data() {
-                return {
-                    selectedCards: [],
-                    isSelecting: false
-                };
-            },
-            template: `
-                <div class="section tarot-deck">
-                    <h2>🃏 타로 카드 랜덤 선택</h2>
-                    <p class="text-center mb-3">버튼을 눌러 카드를 랜덤하게 선택하세요 ({{ selectedCards.length }}/3)</p>
+                <!-- 카드 선택 -->
+                <div id="deck" class="section tarot-deck" style="display: none;">
+                    <h2>🎴 카드를 선택하세요</h2>
                     
-                    <!-- 랜덤 선택 버튼 -->
+                    <!-- 랜덤 선택 영역 -->
                     <div class="random-selection-area">
-                        <button 
-                            @click="selectRandomCard" 
-                            :disabled="selectedCards.length >= 3 || isSelecting"
-                            class="btn btn-primary random-select-btn">
-                            <span v-if="!isSelecting">🎲 카드 랜덤 선택</span>
-                            <span v-else>선택 중...</span>
+                        <button id="randomSelectBtn" class="random-select-btn" onclick="selectRandomCard()">
+                            🎲 카드 랜덤 선택
                         </button>
-                        
-                        <button 
-                            @click="resetSelection" 
-                            :disabled="selectedCards.length === 0"
-                            class="btn btn-secondary reset-btn">
+                        <button class="reset-btn" onclick="resetSelection()">
                             🔄 다시 시작
                         </button>
                     </div>
                     
                     <!-- 선택된 카드 표시 -->
-                    <div v-if="selectedCards.length > 0" class="selected-cards-display">
-                        <h3>선택된 카드들</h3>
-                        <div class="selected-cards-list">
-                            <div 
-                                v-for="(card, index) in selectedCards" 
-                                :key="card.id"
-                                class="selected-card-item">
-                                <div class="card-number">{{ index + 1 }}번째 카드</div>
-                                <div class="card-name">{{ card.name }}</div>
-                                <div class="card-direction">{{ card.reversed ? '역방향' : '정방향' }}</div>
-                                <div class="card-type">{{ card.major_minor === 'major' ? '메이저 아르카나' : '마이너 아르카나' }}</div>
-                                <button @click="removeCard(index)" class="remove-btn">❌ 제거</button>
-                            </div>
+                    <div class="selected-cards-display">
+                        <h3>선택된 카드 (<span id="selectedCount">0</span>/3)</h3>
+                        <div id="selectedCardsList" class="selected-cards-list">
+                            <!-- 선택된 카드들이 여기에 표시됩니다 -->
                         </div>
-                    </div>
-                    
-                    <!-- 선택 완료 버튼 -->
-                    <div v-if="selectedCards.length === 3" class="selection-complete">
-                        <button @click="completeSelection" class="btn btn-secondary">
-                            🔮 리딩 시작하기 (3/3)
+                        <button id="completeBtn" class="selection-complete" onclick="goToSpread()" style="display: none;">
+                            🔮 리딩 시작하기
                         </button>
                     </div>
                 </div>
-            `,
-            methods: {
-                selectRandomCard() {
-                    if (this.selectedCards.length >= 3) {
-                        alert('이미 3장의 카드를 선택했습니다.');
-                        return;
-                    }
-                    
-                    this.isSelecting = true;
-                    
-                    // 애니메이션 효과를 위한 지연
-                    setTimeout(() => {
-                        const availableCards = this.cards.filter(card => 
-                            !this.selectedCards.find(selected => selected.id === card.id)
-                        );
-                        
-                        if (availableCards.length === 0) {
-                            alert('선택할 수 있는 카드가 없습니다.');
-                            this.isSelecting = false;
-                            return;
-                        }
-                        
-                        // 랜덤 카드 선택
-                        const randomIndex = Math.floor(Math.random() * availableCards.length);
-                        const selectedCard = availableCards[randomIndex];
-                        
-                        // 랜덤 역방향 설정
-                        const isReversed = Math.random() > 0.5;
-                        
-                        this.selectedCards.push({
-                            ...selectedCard,
-                            reversed: isReversed
-                        });
-                        
-                        this.isSelecting = false;
-                    }, 500); // 0.5초 지연으로 선택 효과 연출
-                },
-                
-                removeCard(index) {
-                    this.selectedCards.splice(index, 1);
-                },
-                
-                resetSelection() {
-                    this.selectedCards = [];
-                },
-                
-                completeSelection() {
-                    if (this.selectedCards.length === 3) {
-                        this.$emit('selection-complete', this.selectedCards);
-                    }
-                }
-            }
-        };
 
-        const CardSpread = {
-            props: ['selectedCards'],
-            data() {
-                return {
-                    localSelectedCards: []
-                };
-            },
-                         watch: {
-                 selectedCards: {
-                     immediate: true,
-                     deep: true,
-                     handler(newCards, oldCards) {
-                         console.log('=== CardSpread watch 실행됨 ===');
-                         console.log('CardSpread selectedCards 변경됨:', newCards);
-                         console.log('이전 카드들:', oldCards);
-                         console.log('newCards 타입:', typeof newCards);
-                         console.log('newCards 길이:', newCards ? newCards.length : 'undefined');
-                         console.log('newCards 배열 여부:', Array.isArray(newCards));
-                         console.log('newCards 내용:', JSON.stringify(newCards, null, 2));
-                         
-                         // 간단하고 명확한 로직
-                         if (newCards && Array.isArray(newCards) && newCards.length > 0) {
-                             this.localSelectedCards = [...newCards];
-                             console.log('localSelectedCards 설정됨:', this.localSelectedCards);
-                             console.log('localSelectedCards 길이:', this.localSelectedCards.length);
-                         } else {
-                             this.localSelectedCards = [];
-                             console.log('localSelectedCards 빈 배열로 설정됨');
-                         }
-                         console.log('=== CardSpread watch 완료 ===');
-                     }
-                 }
-             },
-                         mounted() {
-                 console.log('=== CardSpread 컴포넌트 마운트됨 ===');
-                 console.log('selectedCards props:', this.selectedCards);
-                 console.log('selectedCards props 타입:', typeof this.selectedCards);
-                 console.log('selectedCards props 길이:', this.selectedCards ? this.selectedCards.length : 'undefined');
-                 console.log('selectedCards props 내용:', JSON.stringify(this.selectedCards, null, 2));
-                 
-                 // mounted에서도 selectedCards가 있으면 설정
-                 if (this.selectedCards && Array.isArray(this.selectedCards) && this.selectedCards.length > 0) {
-                     this.localSelectedCards = [...this.selectedCards];
-                     console.log('mounted에서 localSelectedCards 설정됨:', this.localSelectedCards);
-                     console.log('mounted에서 localSelectedCards 길이:', this.localSelectedCards.length);
-                 } else {
-                     console.log('mounted에서 selectedCards가 없음, watch에서 처리 대기');
-                     console.log('selectedCards 존재 여부:', !!this.selectedCards);
-                     console.log('selectedCards 배열 여부:', Array.isArray(this.selectedCards));
-                     console.log('selectedCards 길이 확인:', this.selectedCards ? this.selectedCards.length : 'undefined');
-                 }
-                 console.log('=== CardSpread 마운트 완료 ===');
-             },
-            template: `
-                <div class="section card-spread">
+                <!-- 카드 스프레드 -->
+                <div id="spread" class="section card-spread" style="display: none;">
                     <h2>🎴 선택된 카드 스프레드</h2>
                     <p class="text-center mb-3">선택된 3장의 카드를 확인하고 리딩을 시작하세요</p>
                     
                                          <!-- 디버깅 정보 -->
-                     <div style="background: #f0f0f0; padding: 10px; margin: 10px; border: 1px solid #ccc; font-family: monospace; font-size: 12px;">
-                         <p><strong>디버깅 정보:</strong></p>
-                         <p>selectedCards props 타입: {{ typeof selectedCards }}</p>
-                         <p>selectedCards props 길이: {{ selectedCards ? selectedCards.length : 'undefined' }}</p>
-                         <p>localSelectedCards 타입: {{ typeof localSelectedCards }}</p>
-                         <p>localSelectedCards 길이: {{ localSelectedCards ? localSelectedCards.length : 'undefined' }}</p>
-                         <p>localSelectedCards 내용: {{ JSON.stringify(localSelectedCards, null, 2) }}</p>
+                    <div id="spreadDebug" class="debug-info">
+                        <p><strong>스프레드 디버깅 정보:</strong></p>
+                        <p>선택된 카드 수: <span id="debugCardCount">0</span></p>
+                        <p>선택된 목적: <span id="debugPurpose">없음</span></p>
                      </div>
                     
                     <div class="spread-container">
                         <div class="spread-layout">
-                                                         <div class="card-position past">
+                            <div class="card-position">
                                 <h4>과거</h4>
-                                <div class="card-display">
-                                    <div class="card-name">{{ getCardName(0) }}</div>
-                                    <div class="card-direction">{{ getCardDirection(0) }}</div>
+                                <div id="pastCard" class="card-summary">
+                                    <h5 id="pastCardName">카드 선택 필요</h5>
+                                    <p id="pastCardDirection" class="card-direction">-</p>
+                                    <p id="pastCardMeaning" class="card-meaning">과거의 상황을 나타냅니다</p>
                                 </div>
                             </div>
-                            
-                            <div class="card-position present">
+                            <div class="card-position">
                                 <h4>현재</h4>
-                                <div class="card-display">
-                                    <div class="card-name">{{ getCardName(1) }}</div>
-                                    <div class="card-direction">{{ getCardDirection(1) }}</div>
+                                <div id="presentCard" class="card-summary">
+                                    <h5 id="presentCardName">카드 선택 필요</h5>
+                                    <p id="presentCardDirection" class="card-direction">-</p>
+                                    <p id="presentCardMeaning" class="card-meaning">현재의 상황을 나타냅니다</p>
                                 </div>
                             </div>
-                            
-                            <div class="card-position future">
+                            <div class="card-position">
                                 <h4>미래</h4>
-                                <div class="card-display">
-                                    <div class="card-name">{{ getCardName(2) }}</div>
-                                    <div class="card-direction">{{ getCardDirection(2) }}</div>
+                                <div id="futureCard" class="card-summary">
+                                    <h5 id="futureCardName">카드 선택 필요</h5>
+                                    <p id="futureCardDirection" class="card-direction">-</p>
+                                    <p id="futureCardMeaning" class="card-meaning">미래의 가능성을 나타냅니다</p>
                                 </div>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="spread-actions">
-                        <button @click="startReading" class="btn btn-primary">
-                            🔮 리딩 시작
+                    <div class="text-center mt-4">
+                        <button class="btn btn-primary" onclick="startReading()">
+                            ✨ 리딩 시작하기
                         </button>
-                        <button @click="$emit('reshuffle')" class="btn btn-secondary">
-                            🔄 다시 섞기
+                        <button class="btn btn-secondary" onclick="goToSelection()">
+                            🔄 카드 다시 선택
                         </button>
                     </div>
                 </div>
-            `,
-                         methods: {
-                 getCardName(index) {
-                     console.log(`getCardName(${index}) 호출됨`);
-                     console.log('this.localSelectedCards:', this.localSelectedCards);
-                     console.log('this.localSelectedCards 길이:', this.localSelectedCards ? this.localSelectedCards.length : 'undefined');
-                     
-                     if (!this.localSelectedCards || !Array.isArray(this.localSelectedCards) || this.localSelectedCards.length === 0) {
-                         console.log(`카드 ${index} 없음 - localSelectedCards가 비어있음`);
-                         return '카드 없음';
-                     }
-                     
-                     if (!this.localSelectedCards[index]) {
-                         console.log(`카드 ${index} 없음 - 해당 인덱스에 카드가 없음`);
-                         return '카드 없음';
-                     }
-                     
-                     const cardName = this.localSelectedCards[index].name || '카드 없음';
-                     console.log(`카드 ${index} 이름:`, cardName);
-                     return cardName;
-                 },
-                 getCardDirection(index) {
-                     console.log(`getCardDirection(${index}) 호출됨`);
-                     
-                     if (!this.localSelectedCards || !Array.isArray(this.localSelectedCards) || this.localSelectedCards.length === 0) {
-                         console.log(`카드 ${index} 방향 없음 - localSelectedCards가 비어있음`);
-                         return '정방향';
-                     }
-                     
-                     if (!this.localSelectedCards[index]) {
-                         console.log(`카드 ${index} 방향 없음 - 해당 인덱스에 카드가 없음`);
-                         return '정방향';
-                     }
-                     
-                     const direction = this.localSelectedCards[index].reversed ? '역방향' : '정방향';
-                     console.log(`카드 ${index} 방향:`, direction);
-                     return direction;
-                 },
-                                 startReading() {
-                    console.log('=== CardSpread startReading 호출됨 ===');
-                    console.log('this.localSelectedCards:', this.localSelectedCards);
-                    console.log('this.localSelectedCards 타입:', typeof this.localSelectedCards);
-                    console.log('this.localSelectedCards 길이:', this.localSelectedCards ? this.localSelectedCards.length : 'undefined');
-                    
-                    if (!this.localSelectedCards || !Array.isArray(this.localSelectedCards) || this.localSelectedCards.length === 0) {
-                        console.error('CardSpread: 선택된 카드가 없습니다!');
-                        console.error('localSelectedCards 상태:', this.localSelectedCards);
-                        alert('선택된 카드가 없습니다. 카드를 다시 선택해주세요.');
-                        return;
-                    }
-                    
-                    console.log('CardSpread에서 이벤트 발생 전 데이터 확인:');
-                    console.log('전달할 카드들:', this.localSelectedCards);
-                    console.log('카드 1:', this.localSelectedCards[0]);
-                    console.log('카드 2:', this.localSelectedCards[1]);
-                    console.log('카드 3:', this.localSelectedCards[2]);
-                    
-                    // 이벤트 발생 (매개변수 없이)
-                    this.$emit('start-reading');
-                    console.log('=== CardSpread startReading 완료 ===');
-                }
-             }
-        };
 
-        const ReadingResult = {
-            props: ['readingData'],
-            mounted() {
-                console.log('=== ReadingResult 컴포넌트 마운트됨 ===');
-                console.log('readingData props:', this.readingData);
-                console.log('readingData props 타입:', typeof this.readingData);
-                console.log('readingData props 존재 여부:', !!this.readingData);
-                
-                if (this.readingData) {
-                    console.log('readingData 전체 내용:', JSON.stringify(this.readingData, null, 2));
-                    console.log('readingData.cards:', this.readingData.cards);
-                    console.log('readingData.cards 타입:', typeof this.readingData.cards);
-                    console.log('readingData.cards 길이:', this.readingData.cards ? this.readingData.cards.length : 'undefined');
-                    console.log('readingData.cards 내용:', JSON.stringify(this.readingData.cards, null, 2));
-                    console.log('readingData.purpose:', this.readingData.purpose);
-                    console.log('readingData.purpose 타입:', typeof this.readingData.purpose);
-                    console.log('readingData.cardMeanings:', this.readingData.cardMeanings);
-                    console.log('readingData.cardMeanings 타입:', typeof this.readingData.cardMeanings);
-                    console.log('readingData.cardMeanings 길이:', this.readingData.cardMeanings ? this.readingData.cardMeanings.length : 'undefined');
-                    console.log('readingData.cardMeanings 내용:', JSON.stringify(this.readingData.cardMeanings, null, 2));
-                    console.log('readingData.combination:', this.readingData.combination);
-                    console.log('readingData.combination 타입:', typeof this.readingData.combination);
-                    console.log('readingData.combination 내용:', JSON.stringify(this.readingData.combination, null, 2));
-                    console.log('readingData.timestamp:', this.readingData.timestamp);
-                    console.log('readingData.timestamp 타입:', typeof this.readingData.timestamp);
-                } else {
-                    console.warn('readingData가 null 또는 undefined입니다!');
-                }
-                console.log('=== ReadingResult 마운트 완료 ===');
-            },
-            template: `
-                <div class="section reading-result">
+                <!-- 리딩 결과 -->
+                <div id="result" class="section reading-result" style="display: none;">
                     <h2>✨ 타로 리딩 결과</h2>
                     
-                                         <!-- 디버깅 정보 -->
-                     <div style="background: #f0f0f0; padding: 10px; margin: 10px; border: 1px solid #ccc; font-family: monospace; font-size: 12px;">
-                         <p><strong>ReadingResult 디버깅 정보:</strong></p>
-                         <p>readingData props 타입: {{ typeof readingData }}</p>
-                         <p>readingData 존재 여부: {{ readingData ? '있음' : '없음' }}</p>
-                         <p>readingData 값: {{ readingData }}</p>
-                         <p v-if="readingData">readingData 전체 내용: {{ JSON.stringify(readingData, null, 2) }}</p>
-                         <p v-if="readingData">readingData.cards 타입: {{ typeof readingData.cards }}</p>
-                         <p v-if="readingData">readingData.cards 존재 여부: {{ readingData.cards ? '있음' : '없음' }}</p>
-                         <p v-if="readingData">readingData.cards 길이: {{ readingData.cards ? readingData.cards.length : 'undefined' }}</p>
-                         <p v-if="readingData">readingData.cards 내용: {{ JSON.stringify(readingData.cards, null, 2) }}</p>
-                         <p v-if="readingData">readingData.purpose: {{ readingData.purpose }}</p>
-                         <p v-if="readingData">readingData.purpose 타입: {{ typeof readingData.purpose }}</p>
-                         <p v-if="readingData">readingData.cardMeanings 타입: {{ typeof readingData.cardMeanings }}</p>
-                         <p v-if="readingData">readingData.cardMeanings 존재 여부: {{ readingData.cardMeanings ? '있음' : '없음' }}</p>
-                         <p v-if="readingData">readingData.cardMeanings 길이: {{ readingData.cardMeanings ? readingData.cardMeanings.length : 'undefined' }}</p>
-                         <p v-if="readingData">readingData.cardMeanings 내용: {{ JSON.stringify(readingData.cardMeanings, null, 2) }}</p>
-                         <p v-if="readingData">readingData.combination 타입: {{ typeof readingData.combination }}</p>
-                         <p v-if="readingData">readingData.combination 존재 여부: {{ readingData.combination ? '있음' : '없음' }}</p>
-                         <p v-if="readingData">readingData.combination 내용: {{ JSON.stringify(readingData.combination, null, 2) }}</p>
-                         <p v-if="readingData">readingData.timestamp: {{ readingData.timestamp }}</p>
-                         <p v-if="readingData">readingData.timestamp 타입: {{ typeof readingData.timestamp }}</p>
-                     </div>
-                    
-                    <div v-if="readingData" class="result-content">
+                    <!-- 디버깅 정보 -->
+                    <div id="resultDebug" class="debug-info">
+                        <p><strong>결과 디버깅 정보:</strong></p>
+                        <p>선택된 카드 수: <span id="resultDebugCardCount">0</span></p>
+                        <p>선택된 목적: <span id="resultDebugPurpose">없음</span></p>
+                        <p>카드 의미 수: <span id="resultDebugMeanings">0</span></p>
+                    </div>
+
+                    <div class="result-content">
                         <div class="result-summary">
-                            <h3>📋 리딩 요약</h3>
-                            <p><strong>목적:</strong> {{ getPurposeName(readingData.purpose) }}</p>
-                            <p><strong>리딩 시간:</strong> {{ formatDate(readingData.timestamp) }}</p>
+                            <h3>🔮 전체적인 해석</h3>
+                            <p id="overallMeaning">리딩 결과가 여기에 표시됩니다.</p>
                         </div>
                         
-                        <div class="cards-summary">
-                            <h3>🎴 선택된 카드</h3>
-                            <div class="selected-cards-summary">
-                                <div v-for="(card, index) in getSafeCards()" :key="card.id" class="card-summary">
-                                    <div class="position">{{ getPositionName(index) }}</div>
-                                    <div class="card-info">
-                                        <div class="card-name">{{ card.name || '카드 없음' }}</div>
-                                        <div class="card-direction">{{ card.reversed ? '역방향' : '정방향' }}</div>
-                                        <div class="card-meaning">{{ getCardMeaning(card, index) }}</div>
+                        <div class="result-advice">
+                            <h3>💡 조언</h3>
+                            <p id="advice">조언이 여기에 표시됩니다.</p>
                                     </div>
-                                </div>
+
+                        <div class="result-cards">
+                            <h3>📋 선택된 카드들</h3>
+                            <div id="resultCardsList" class="cards-grid">
+                                <!-- 선택된 카드들의 상세 정보가 여기에 표시됩니다 -->
                             </div>
                         </div>
                         
-                        <div class="reading-interpretation">
-                            <h3>🔮 해석</h3>
-                            <div class="interpretation-content">
-                                <p><strong>전체적인 의미:</strong></p>
-                                <p>{{ readingData.combination?.overall_meaning || '기본적인 해석이 제공됩니다.' }}</p>
-                                
-                                <p><strong>조언:</strong></p>
-                                <p>{{ readingData.combination?.advice || '현재 상황을 잘 관찰하고 미래를 준비하세요.' }}</p>
-                            </div>
+                        <div class="text-center mt-4">
+                            <button class="btn btn-primary" onclick="startOver()">
+                                🔄 새로운 리딩 시작
+                            </button>
                         </div>
                     </div>
-                    
-                    <div class="result-actions">
-                        <button @click="$emit('new-reading')" class="btn btn-primary">
-                            🆕 새로운 리딩
-                        </button>
-                    </div>
                 </div>
-            `,
-            methods: {
-                getPurposeName(purpose) {
-                    const purposes = {
-                        'love': '연애/사랑',
-                        'career': '직장/일',
-                        'daily': '오늘의 운세',
-                        'health': '건강',
-                        'money': '금전'
-                    };
-                    return purposes[purpose] || purpose;
-                },
-                formatDate(timestamp) {
-                    return new Date(timestamp).toLocaleString('ko-KR');
-                },
-                getPositionName(index) {
-                    const positions = ['과거', '현재', '미래'];
-                    return positions[index] || '';
-                },
-                getSafeCards() {
-                    if (!this.readingData || !this.readingData.cards || !Array.isArray(this.readingData.cards)) {
-                        return [];
-                    }
-                    return this.readingData.cards;
-                },
-                getCardMeaning(card, index) {
-                    if (!this.readingData || !this.readingData.cardMeanings || !this.readingData.cardMeanings[index]) {
-                        return '의미를 불러올 수 없습니다.';
-                    }
-                    
-                    const meaning = this.readingData.cardMeanings[index];
-                    if (!meaning.meaning) {
-                        return '의미 정보가 없습니다.';
-                    }
-                    
-                    // 의미 텍스트를 짧게 자르기
-                    return meaning.meaning.length > 100 ? 
-                           meaning.meaning.substring(0, 100) + '...' : 
-                           meaning.meaning;
-                }
-            }
-        };
+            </div>
+        </main>
+    </div>
 
-        const UserHistory = {
-            template: `
-                <div class="section user-history">
-                    <h2>📚 리딩 히스토리</h2>
-                    <p class="text-center mb-3">이전 리딩 기록을 확인하세요</p>
-                    
-                    <div class="history-content">
-                        <p>히스토리 기능은 로그인 후 사용할 수 있습니다.</p>
-                        <button @click="$emit('back-to-main')" class="btn btn-secondary">
-                            ← 메인으로 돌아가기
-                        </button>
-                    </div>
-                </div>
-            `
-        };
+    <!-- JavaScript 파일들 -->
+    <script src="js/services/supabase.js"></script>
+    <script src="js/services/tarotService.js"></script>
+    <script src="js/utils/cardUtils.js"></script>
+    
+    <script>
+        // 전역 변수들
+        let currentStep = 'purpose';
+        let selectedPurpose = null;
+        let selectedCards = [];
+        let allCards = [];
+        let readingData = null;
 
-        // 기본 테스트 함수들
-        function updateCurrentTime() {
-            document.getElementById('current-time').textContent = new Date().toLocaleString();
-        }
-
-        function checkVueStatus() {
-            if (typeof Vue !== 'undefined') {
-                document.getElementById('vue-status').textContent = '✅ 로드됨';
-                document.getElementById('vue-status').className = 'success';
-            } else {
-                document.getElementById('vue-status').textContent = '❌ 로드 실패';
-                document.getElementById('vue-status').className = 'error';
-            }
-        }
-
-        function checkCSSStatus() {
-            const styleSheets = document.styleSheets;
-            let cssLoaded = false;
-            
-            for (let i = 0; i < styleSheets.length; i++) {
-                try {
-                    if (styleSheets[i].href && styleSheets[i].href.includes('style.css')) {
-                        cssLoaded = true;
-                        break;
-                    }
-                } catch (e) {
-                    // CORS 오류 무시
-                }
-            }
-            
-            if (cssLoaded) {
-                document.getElementById('css-status').textContent = '✅ 로드됨';
-                document.getElementById('css-status').className = 'success';
-            } else {
-                document.getElementById('css-status').textContent = '❌ 로드 실패';
-                document.getElementById('css-status').className = 'error';
-            }
-        }
-
-        // 페이지 로드 시 테스트 실행
-        window.addEventListener('load', function() {
-            updateCurrentTime();
-            checkVueStatus();
-            checkCSSStatus();
-            
-            // 1초마다 시간 업데이트
-            setInterval(updateCurrentTime, 1000);
+        // 초기화
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('=== 애플리케이션 시작 ===');
+            await initializeApp();
         });
 
-        const app = createApp({
-            data() {
-                return {
-                    isLoading: true,
-                    showSetupGuide: false,
-                    currentStep: 'purpose',
-                    selectedPurpose: null,
-                    cards: [],
-                    selectedCards: [],
-                    readingData: null,
-                    loadingMessage: '시스템을 초기화하고 있습니다...'
-                };
-            },
-            async mounted() {
-                await this.initializeApp();
-            },
-            methods: {
-                async initializeApp() {
-                    try {
-                        this.loadingMessage = 'Supabase 연결을 확인하고 있습니다...';
-                        
-                        // Supabase 연결 확인
-                        await checkSupabaseConnection();
-                        
-                        this.loadingMessage = '카드 데이터를 로딩하고 있습니다...';
-                        
-                        // 카드 데이터 로드
-                        this.cards = await loadCards();
-                        
-                        this.isLoading = false;
-                        console.log('애플리케이션 초기화 완료');
-                        
-                    } catch (error) {
-                        console.error('초기화 실패:', error);
-                        this.showSetupGuide = true;
-                        this.isLoading = false;
-                        showSetupGuide();
-                    }
-                },
+        async function initializeApp() {
+            try {
+                showLoading(true);
                 
-                onPurposeSelected(purpose) {
-                    this.selectedPurpose = purpose;
-                    this.currentStep = 'deck';
-                },
+                // Supabase 연결 테스트
+                const isConnected = await simpleConnectionTest();
+                if (!isConnected) {
+                    showSection('setup');
+                    return;
+                }
+
+                // 카드 데이터 로드
+                const cards = await fetchCards();
+                if (cards && cards.length > 0) {
+                    allCards = cards;
+                    console.log('카드 로드 완료:', allCards.length, '장');
+                    showSection('purpose');
+                } else {
+                    throw new Error('카드 데이터를 불러올 수 없습니다.');
+                }
+            } catch (error) {
+                console.error('초기화 실패:', error);
+                showSection('setup');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // 섹션 표시 함수
+        function showSection(sectionName) {
+            console.log('섹션 변경:', currentStep, '→', sectionName);
+            
+            // 모든 섹션 숨기기
+            const sections = ['loading', 'setup', 'purpose', 'deck', 'spread', 'result'];
+            sections.forEach(section => {
+                document.getElementById(section).style.display = 'none';
+            });
+            
+            // 해당 섹션 표시
+            document.getElementById(sectionName).style.display = 'block';
+            currentStep = sectionName;
+            
+            console.log('현재 단계:', currentStep);
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        // 연결 테스트
+        async function testConnection() {
+            try {
+                console.log('연결 확인 버튼 클릭됨');
+                const isConnected = await simpleConnectionTest();
+                if (isConnected) {
+                    alert('연결이 성공했습니다!');
+                    await initializeApp();
+            } else {
+                    alert('연결에 실패했습니다. 콘솔을 확인해주세요.');
+                }
+            } catch (error) {
+                console.error('연결 확인 중 오류:', error);
+                alert(`연결에 실패했습니다: ${error.message}`);
+            }
+        }
+
+        // 목적 선택
+        function selectPurpose(purpose) {
+            console.log('=== 목적 선택됨 ===');
+            console.log('선택된 목적:', purpose);
+            
+            selectedPurpose = purpose;
+            showSection('deck');
+        }
+
+        // 랜덤 카드 선택
+        function selectRandomCard() {
+            console.log('=== 랜덤 카드 선택 ===');
+            console.log('현재 선택된 카드 수:', selectedCards.length);
+            
+            if (selectedCards.length >= 3) {
+                console.log('이미 3장이 선택됨');
+                return;
+            }
+
+            // 이미 선택된 카드 제외
+            const availableCards = allCards.filter(card => 
+                !selectedCards.some(selected => selected.id === card.id)
+            );
+
+            if (availableCards.length === 0) {
+                console.log('선택 가능한 카드가 없음');
+                return;
+            }
+
+            // 랜덤 선택
+            const randomIndex = Math.floor(Math.random() * availableCards.length);
+            const selectedCard = availableCards[randomIndex];
+            
+            // 정방향/역방향 랜덤 결정
+            selectedCard.reversed = Math.random() < 0.5;
+            
+            selectedCards.push(selectedCard);
+            
+            console.log('선택된 카드:', selectedCard.name, selectedCard.reversed ? '(역방향)' : '(정방향)');
+            
+            updateSelectedCardsDisplay();
+        }
+
+        // 선택된 카드 표시 업데이트
+        function updateSelectedCardsDisplay() {
+            const countElement = document.getElementById('selectedCount');
+            const listElement = document.getElementById('selectedCardsList');
+            const completeBtn = document.getElementById('completeBtn');
+            
+            countElement.textContent = selectedCards.length;
+            
+            // 카드 리스트 업데이트
+            listElement.innerHTML = '';
+            selectedCards.forEach((card, index) => {
+                const cardItem = document.createElement('div');
+                cardItem.className = 'selected-card-item';
+                cardItem.innerHTML = `
+                    <div class="card-info">
+                        <div class="card-number">${index + 1}.</div>
+                        <div class="card-details">
+                            <div class="card-name">${card.name}</div>
+                            <div class="card-direction">${card.reversed ? '역방향' : '정방향'}</div>
+                            <div class="card-type">${card.major_minor === 'major' ? '메이저 아르카나' : '마이너 아르카나'}</div>
+                        </div>
+                        <button class="remove-btn" onclick="removeCard(${index})">×</button>
+                    </div>
+                `;
+                listElement.appendChild(cardItem);
+            });
+            
+            // 완료 버튼 표시/숨김
+            if (selectedCards.length === 3) {
+                completeBtn.style.display = 'block';
+                document.getElementById('randomSelectBtn').disabled = true;
+            } else {
+                completeBtn.style.display = 'none';
+                document.getElementById('randomSelectBtn').disabled = false;
+            }
+        }
+
+        // 카드 제거
+        function removeCard(index) {
+            console.log('카드 제거:', index);
+            selectedCards.splice(index, 1);
+            updateSelectedCardsDisplay();
+        }
+
+        // 선택 초기화
+        function resetSelection() {
+            console.log('선택 초기화');
+            selectedCards = [];
+            updateSelectedCardsDisplay();
+        }
+
+        // 스프레드로 이동
+        function goToSpread() {
+            console.log('=== 스프레드로 이동 ===');
+            console.log('선택된 카드들:', selectedCards);
+            
+            if (selectedCards.length !== 3) {
+                alert('3장의 카드를 모두 선택해주세요.');
+                return;
+            }
+            
+            updateSpreadDisplay();
+            showSection('spread');
+        }
+
+        // 스프레드 화면 업데이트
+        function updateSpreadDisplay() {
+            console.log('=== 스프레드 화면 업데이트 ===');
+            
+            // 디버깅 정보 업데이트
+            document.getElementById('debugCardCount').textContent = selectedCards.length;
+            document.getElementById('debugPurpose').textContent = selectedPurpose || '없음';
+            
+            // 카드 정보 업데이트
+            const positions = ['past', 'present', 'future'];
+            const positionNames = ['과거', '현재', '미래'];
+            
+            selectedCards.forEach((card, index) => {
+                const position = positions[index];
+                const positionName = positionNames[index];
                 
-                                 onCardSelectionComplete(cards) {
-                     console.log('=== onCardSelectionComplete 호출됨 ===');
-                     console.log('전달받은 cards:', cards);
-                     console.log('cards 타입:', typeof cards);
-                     console.log('cards 길이:', cards ? cards.length : 'undefined');
-                     console.log('cards 내용:', JSON.stringify(cards, null, 2));
-                     
-                     console.log('currentStep 변경 전:', this.currentStep);
-                     console.log('selectedCards 설정 전:', this.selectedCards);
-                     
-                     // Vue의 반응성을 위해 nextTick 사용
-                     this.selectedCards = [...cards];  // 새 배열 생성
-                     
-                     // nextTick을 사용해서 DOM 업데이트 후 단계 변경
-                     this.$nextTick(() => {
-                         console.log('nextTick에서 currentStep 변경');
-                         this.currentStep = 'spread';
-                         
-                         console.log('this.selectedCards 설정됨:', this.selectedCards);
-                         console.log('this.selectedCards 타입:', typeof this.selectedCards);
-                         console.log('this.selectedCards 길이:', this.selectedCards ? this.selectedCards.length : 'undefined');
-                         console.log('currentStep 변경 후:', this.currentStep);
-                         console.log('=== onCardSelectionComplete 완료 ===');
-                     });
-                 },
+                document.getElementById(`${position}CardName`).textContent = card.name;
+                document.getElementById(`${position}CardDirection`).textContent = 
+                    card.reversed ? '역방향' : '정방향';
+                document.getElementById(`${position}CardMeaning`).textContent = 
+                    `${positionName}의 ${card.reversed ? card.reversed_meaning : card.upright_meaning}`;
+            });
+        }
+
+        // 리딩 시작
+        async function startReading() {
+            console.log('=== 리딩 시작 ===');
+            console.log('선택된 카드들:', selectedCards);
+            console.log('선택된 목적:', selectedPurpose);
+            
+            try {
+                showLoading(true);
                 
-                async onStartReading() {
-                    try {
-                        this.isLoading = true;
-                        
-                        console.log('=== onStartReading 호출됨 ===');
-                        console.log('this.selectedCards:', this.selectedCards);
-                        console.log('this.selectedCards 타입:', typeof this.selectedCards);
-                        console.log('this.selectedCards 길이:', this.selectedCards ? this.selectedCards.length : 'undefined');
-                        console.log('this.selectedCards 내용:', JSON.stringify(this.selectedCards, null, 2));
-                        console.log('선택된 목적:', this.selectedPurpose);
-                        console.log('선택된 목적 타입:', typeof this.selectedPurpose);
-                        
-                        // this.selectedCards 직접 사용
-                        if (!this.selectedCards || !Array.isArray(this.selectedCards) || this.selectedCards.length === 0) {
-                            console.error('선택된 카드 검증 실패!');
-                            console.error('selectedCards 존재 여부:', !!this.selectedCards);
-                            console.error('selectedCards 배열 여부:', Array.isArray(this.selectedCards));
-                            console.error('selectedCards 길이:', this.selectedCards ? this.selectedCards.length : 'undefined');
-                            throw new Error('선택된 카드가 없습니다. 카드를 다시 선택해주세요.');
-                        }
-                        
-                        const selectedCards = this.selectedCards;
-                        console.log('사용할 카드들:', selectedCards);
-                        console.log('사용할 카드들 타입:', typeof selectedCards);
-                        console.log('사용할 카드들 길이:', selectedCards.length);
-                        
-                        // 선택된 카드들의 실제 의미를 분석
-                        const cardMeanings = selectedCards.map((card, index) => {
-                            console.log(`=== 카드 ${index + 1} 분석 시작 ===`);
-                            console.log(`카드 ${index + 1} 원본 데이터:`, card);
-                            console.log(`카드 ${index + 1} name:`, card.name);
-                            console.log(`카드 ${index + 1} reversed:`, card.reversed);
-                            console.log(`카드 ${index + 1} upright_meaning:`, card.upright_meaning);
-                            console.log(`카드 ${index + 1} reversed_meaning:`, card.reversed_meaning);
-                            console.log(`카드 ${index + 1} keywords:`, card.keywords);
-                            
-                            const meaning = {
+                // 카드 의미 분석
+                const cardMeanings = selectedCards.map((card, index) => ({
                                 name: card.name,
-                                position: ['과거', '현재', '미래'][index] || '과거',
+                    position: ['과거', '현재', '미래'][index],
                                 meaning: card.reversed ? card.reversed_meaning : card.upright_meaning,
                                 keywords: card.keywords,
                                 isReversed: card.reversed
-                            };
-                            
-                            console.log(`카드 ${index + 1} 생성된 의미:`, meaning);
-                            console.log(`=== 카드 ${index + 1} 분석 완료 ===`);
-                            return meaning;
-                        });
-                        
-                        console.log('카드 의미 분석 완료:', cardMeanings);
-                        console.log('카드 의미 분석 타입:', typeof cardMeanings);
-                        console.log('카드 의미 분석 길이:', cardMeanings.length);
-                        
-                        // 전체적인 해석 생성
-                        console.log('=== 해석 생성 시작 ===');
-                        const overallMeaning = this.generateOverallMeaning(cardMeanings, this.selectedPurpose);
-                        const advice = this.generateAdvice(cardMeanings, this.selectedPurpose);
-                        
-                        console.log('생성된 전체 의미:', overallMeaning);
-                        console.log('생성된 조언:', advice);
-                        console.log('=== 해석 생성 완료 ===');
-                        
-                        // 리딩 결과 생성
-                        console.log('=== 리딩 데이터 생성 시작 ===');
-                        this.readingData = {
-                            cards: selectedCards,
-                            purpose: this.selectedPurpose,
+                }));
+                
+                console.log('카드 의미 분석:', cardMeanings);
+                
+                // 전체 해석 생성
+                const overallMeaning = generateOverallMeaning(cardMeanings, selectedPurpose);
+                const advice = generateAdvice(cardMeanings, selectedPurpose);
+                
+                // 리딩 데이터 생성
+                readingData = {
+                    cards: selectedCards,
+                    purpose: selectedPurpose,
                             cardMeanings: cardMeanings,
                             combination: {
                                 overall_meaning: overallMeaning,
@@ -813,78 +434,51 @@
                             timestamp: new Date()
                         };
                         
-                        console.log('리딩 데이터 생성 완료:', this.readingData);
-                        console.log('readingData 타입:', typeof this.readingData);
-                        console.log('readingData.cards:', this.readingData.cards);
-                        console.log('readingData.cards 타입:', typeof this.readingData.cards);
-                        console.log('readingData.cards 길이:', this.readingData.cards ? this.readingData.cards.length : 'undefined');
-                        console.log('readingData.purpose:', this.readingData.purpose);
-                        console.log('readingData.purpose 타입:', typeof this.readingData.purpose);
-                        console.log('readingData.cardMeanings:', this.readingData.cardMeanings);
-                        console.log('readingData.cardMeanings 타입:', typeof this.readingData.cardMeanings);
-                        console.log('readingData.cardMeanings 길이:', this.readingData.cardMeanings ? this.readingData.cardMeanings.length : 'undefined');
-                        console.log('readingData.combination:', this.readingData.combination);
-                        console.log('readingData.combination 타입:', typeof this.readingData.combination);
-                        console.log('=== 리딩 데이터 생성 완료 ===');
-                        
-                        console.log('currentStep을 result로 변경하기 전:', this.currentStep);
-                        this.currentStep = 'result';
-                        console.log('currentStep을 result로 변경 후:', this.currentStep);
-                        console.log('=== onStartReading 완료 ===');
-                        
-                    } catch (error) {
-                        console.error('리딩 생성 실패:', error);
-                        console.error('오류 스택:', error.stack);
-                        console.error('오류 메시지:', error.message);
-                        console.error('오류 이름:', error.name);
-                        alert(`리딩을 생성하는 중 오류가 발생했습니다: ${error.message}`);
-                    } finally {
-                        this.isLoading = false;
-                        console.log('onStartReading finally 블록 실행됨');
-                    }
-                },
+                console.log('리딩 데이터 생성 완료:', readingData);
                 
-                onReshuffle() {
-                    this.selectedCards = [];
-                    this.currentStep = 'deck';
-                },
+                updateResultDisplay();
+                showSection('result');
                 
-                onNewReading() {
-                    this.selectedPurpose = null;
-                    this.selectedCards = [];
-                    this.readingData = null;
-                    this.currentStep = 'purpose';
-                },
-                
-                async checkConnection() {
-                    try {
-                        console.log('연결 확인 버튼 클릭됨');
-                        
-                        // 간단한 테스트 먼저 실행
-                        const simpleTest = await simpleConnectionTest();
-                        if (simpleTest) {
-                            alert('연결이 성공했습니다!');
-                            this.showSetupGuide = false;
-                            await this.initializeApp();
-                        } else {
-                            alert('연결에 실패했습니다. 콘솔을 확인해주세요.');
-                        }
-                    } catch (error) {
-                        console.error('연결 확인 중 오류:', error);
-                        alert(`연결에 실패했습니다: ${error.message}`);
-                    }
-                },
-                
-                showConnectionStatus() {
-                    const status = this.isLoading ? '로딩 중' : 
-                                 this.showSetupGuide ? '설정 필요' : '연결됨';
-                    alert(`현재 상태: ${status}`);
-                },
-                
-                generateOverallMeaning(cardMeanings, purpose) {
-                    try {
-                        console.log('generateOverallMeaning 호출:', { cardMeanings, purpose });
-                        
+            } catch (error) {
+                console.error('리딩 생성 실패:', error);
+                alert('리딩을 생성하는 중 오류가 발생했습니다.');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // 결과 화면 업데이트
+        function updateResultDisplay() {
+            console.log('=== 결과 화면 업데이트 ===');
+            
+            // 디버깅 정보 업데이트
+            document.getElementById('resultDebugCardCount').textContent = selectedCards.length;
+            document.getElementById('resultDebugPurpose').textContent = selectedPurpose || '없음';
+            document.getElementById('resultDebugMeanings').textContent = readingData.cardMeanings.length;
+            
+            // 해석 결과 표시
+            document.getElementById('overallMeaning').textContent = readingData.combination.overall_meaning;
+            document.getElementById('advice').textContent = readingData.combination.advice;
+            
+            // 카드 상세 정보 표시
+            const cardsList = document.getElementById('resultCardsList');
+            cardsList.innerHTML = '';
+            
+            readingData.cardMeanings.forEach((cardMeaning, index) => {
+                const cardDiv = document.createElement('div');
+                cardDiv.className = 'card-detail';
+                cardDiv.innerHTML = `
+                    <h4>${cardMeaning.position}: ${cardMeaning.name}</h4>
+                    <p class="card-direction">${cardMeaning.isReversed ? '역방향' : '정방향'}</p>
+                    <p class="card-meaning">${cardMeaning.meaning}</p>
+                    <p class="card-keywords">키워드: ${cardMeaning.keywords}</p>
+                `;
+                cardsList.appendChild(cardDiv);
+            });
+        }
+
+        // 해석 생성 함수들
+        function generateOverallMeaning(cardMeanings, purpose) {
                         const purposeNames = {
                             'love': '사랑과 관계',
                             'career': '직장과 업무',
@@ -894,65 +488,36 @@
                         };
                         
                         const purposeName = purposeNames[purpose] || '일반적인';
-                        
-                        // 안전한 카드 이름 추출
-                        const cardNames = cardMeanings.map(card => card?.name || '알 수 없는 카드');
-                        
-                        // 카드들의 키워드를 분석 (안전하게)
-                        const keywords = cardMeanings
-                            .map(card => card?.keywords)
-                            .filter(k => k && typeof k === 'string')
-                            .join(', ');
-                        
-                        const result = `${purposeName} 측면에서 ${cardNames[0]}, ${cardNames[1]}, ${cardNames[2]}의 조합은 ${keywords || '다양한'}의 에너지를 나타냅니다. 과거의 경험이 현재의 선택에 영향을 미치고, 미래의 방향성을 제시하고 있습니다.`;
-                        
-                        console.log('generateOverallMeaning 결과:', result);
-                        return result;
-                    } catch (error) {
-                        console.error('generateOverallMeaning 오류:', error);
-                        return '카드들의 조합을 통해 현재 상황을 분석한 결과, 균형 잡힌 발전의 시기입니다.';
-                    }
-                },
-                
-                generateAdvice(cardMeanings, purpose) {
-                    try {
-                        console.log('generateAdvice 호출:', { cardMeanings, purpose });
-                        
-                        const reversedCards = cardMeanings.filter(card => card?.isReversed);
-                        const uprightCards = cardMeanings.filter(card => !card?.isReversed);
-                        
-                        console.log('역방향 카드 수:', reversedCards.length);
-                        console.log('정방향 카드 수:', uprightCards.length);
-                        
-                        let advice = '';
+            const cardNames = cardMeanings.map(card => card.name);
+            const keywords = cardMeanings.map(card => card.keywords).join(', ');
+            
+            return `${purposeName} 측면에서 ${cardNames[0]}, ${cardNames[1]}, ${cardNames[2]}의 조합은 ${keywords}의 에너지를 나타냅니다. 과거의 경험이 현재의 선택에 영향을 미치고, 미래의 방향성을 제시하고 있습니다.`;
+        }
+
+        function generateAdvice(cardMeanings, purpose) {
+            const reversedCards = cardMeanings.filter(card => card.isReversed);
+            const uprightCards = cardMeanings.filter(card => !card.isReversed);
                         
                         if (reversedCards.length > 1) {
-                            advice = '역방향 카드가 많아 현재 어려운 시기를 겪고 있을 수 있습니다. 인내심을 가지고 상황을 관찰하세요.';
+                return '역방향 카드가 많아 현재 어려운 시기를 겪고 있을 수 있습니다. 인내심을 가지고 상황을 관찰하세요.';
                         } else if (uprightCards.length > 1) {
-                            advice = '정방향 카드가 많아 긍정적인 에너지가 흐르고 있습니다. 자신의 직감을 믿고 행동하세요.';
+                return '정방향 카드가 많아 긍정적인 에너지가 흐르고 있습니다. 자신의 직감을 믿고 행동하세요.';
                         } else {
-                            advice = '균형 잡힌 카드 배치입니다. 현재 상황을 객관적으로 분석하고 신중하게 판단하세요.';
-                        }
-                        
-                        console.log('generateAdvice 결과:', advice);
-                        return advice;
-                    } catch (error) {
-                        console.error('generateAdvice 오류:', error);
-                        return '현재 상황을 잘 관찰하고 미래를 준비하세요.';
-                    }
-                }
+                return '균형 잡힌 카드 배치입니다. 현재 상황을 객관적으로 분석하고 신중하게 판단하세요.';
             }
-        });
+        }
 
-        // 컴포넌트 등록
-        app.component('purpose-selector', PurposeSelector);
-        app.component('tarot-deck', TarotDeck);
-        app.component('card-spread', CardSpread);
-        app.component('reading-result', ReadingResult);
-        app.component('user-history', UserHistory);
+        // 네비게이션 함수들
+        function goToSelection() {
+            showSection('deck');
+        }
 
-        // 앱 마운트
-        app.mount('#app');
+        function startOver() {
+            selectedPurpose = null;
+            selectedCards = [];
+            readingData = null;
+            showSection('purpose');
+        }
     </script>
 </body>
 </html>
