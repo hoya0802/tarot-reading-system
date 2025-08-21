@@ -581,6 +581,9 @@
             document.getElementById('birthYear').addEventListener('change', updateDayOptions);
         }
         
+        // 전역 함수로 노출
+        window.initializeBirthDateForm = initializeBirthDateForm;
+        
         function updateDayOptions() {
             const year = document.getElementById('birthYear').value;
             const month = document.getElementById('birthMonth').value;
@@ -600,6 +603,9 @@
                 }
             }
         }
+        
+        // 전역 함수로 노출
+        window.updateDayOptions = updateDayOptions;
         
         function confirmBirthDate() {
             const year = document.getElementById('birthYear').value;
@@ -633,10 +639,16 @@
             displayBirthDateSummary();
         }
         
+        // 전역 함수로 노출
+        window.confirmBirthDate = confirmBirthDate;
+        
         function skipBirthDate() {
             console.log('생년월일 입력 건너뛰기');
             showSection('purpose');
         }
+        
+        // 전역 함수로 노출
+        window.skipBirthDate = skipBirthDate;
         
         function calculateLifePathNumber(birthDate) {
             const year = birthDate.getFullYear();
@@ -723,6 +735,9 @@
                 showLoading(false);
             }
         }
+        
+        // 전역 함수로 노출
+        window.initializeApp = initializeApp;
 
         // === 섹션 표시 함수 ===
         function showSection(sectionName) {
@@ -750,6 +765,10 @@
         function showLoading(show) {
             document.getElementById('loading').style.display = show ? 'block' : 'none';
         }
+        
+        // 전역 함수로 노출
+        window.showSection = showSection;
+        window.showLoading = showLoading;
 
         // === 연결 테스트 ===
         async function testConnection() {
@@ -772,6 +791,9 @@
                 alert(`연결에 실패했습니다: ${error.message}`);
             }
         }
+        
+        // 전역 함수로 노출
+        window.testConnection = testConnection;
 
         // === 목적 선택 ===
         function selectPurpose(purpose) {
@@ -792,6 +814,9 @@
             document.getElementById('selectedPurposeName').textContent = purposeNames[purpose];
             showSection('readingType');
         }
+        
+        // 전역 함수로 노출
+        window.selectPurpose = selectPurpose;
 
         // === 리딩 타입 선택 ===
         function selectReadingType(type) {
@@ -816,6 +841,9 @@
                 showSection('deck');
             }
         }
+        
+        // 전역 함수로 노출
+        window.selectReadingType = selectReadingType;
 
         // === 네비게이션 함수들 ===
         function goBackToPurpose() {
@@ -835,6 +863,11 @@
             selectedSingleCard = null;
             showSection('singleDeck');
         }
+        
+        // 전역 함수로 노출
+        window.goBackToPurpose = goBackToPurpose;
+        window.goBackToReadingType = goBackToReadingType;
+        window.goBackToSingleDeck = goBackToSingleDeck;
 
         // === 랜덤 카드 선택 ===
         function selectRandomCard() {
@@ -864,6 +897,9 @@
             selectedCard.reversed = Math.random() < 0.5;
             
             selectedCards.push(selectedCard);
+            
+        // 전역 함수로 노출
+        window.selectRandomCard = selectRandomCard;
             
             console.log('선택된 카드:', selectedCard.name, selectedCard.reversed ? '(역방향)' : '(정방향)');
             
@@ -1110,6 +1146,9 @@
                 showLoading(false);
             }
         }
+        
+        // 전역 함수로 노출
+        window.startReading = startReading;
 
         // === 목적별 특화 정보 추출 ===
         function getSpecialInsight(combinationData, purposeType) {
@@ -1411,6 +1450,9 @@
             
             updateSingleCardDisplay();
         }
+        
+        // 전역 함수로 노출
+        window.selectSingleRandomCard = selectSingleRandomCard;
 
         // === 한 장 카드 표시 업데이트 ===
         function updateSingleCardDisplay() {
@@ -1464,6 +1506,9 @@
             selectedSingleCard = null;
             document.getElementById('singleCardDisplay').style.display = 'none';
         }
+        
+        // 전역 함수로 노출
+        window.resetSingleSelection = resetSingleSelection;
 
         // === 한 장 리딩 시작 ===
         async function startSingleReading() {
@@ -1562,6 +1607,9 @@
                 showLoading(false);
             }
         }
+        
+        // 전역 함수로 노출
+        window.startSingleReading = startSingleReading;
 
         // === 카드에 그룹 정보 추가 ===
         function addGroupInfoToCard(card) {
