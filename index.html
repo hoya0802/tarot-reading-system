@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>타로 리딩 시스템 v0.0.5</title>
+    <title>타로 리딩 시스템 v0.0.7</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/tarot.css">
 </head>
@@ -11,7 +11,7 @@
     <div id="app">
         <header class="header">
             <div class="container">
-                <h1>🔮 타로 리딩 시스템 <span class="version">v0.0.5</span></h1>
+                <h1>🔮 타로 리딩 시스템 <span class="version">v0.0.7</span></h1>
                 <p>당신의 운명을 읽어드립니다</p>
             </div>
         </header>
@@ -401,7 +401,7 @@
         import { NumerologyService } from './js/services/numerologyService.js';
         
         // === 버전 정보 ===
-        const APP_VERSION = '0.0.5';
+        const APP_VERSION = '0.0.7';
         
         // === 전역 변수들 ===
         let currentStep = 'birthDateInput';
@@ -705,7 +705,7 @@
         document.addEventListener('DOMContentLoaded', async function() {
             console.log('=== 애플리케이션 시작 ===');
             console.log('버전:', APP_VERSION);
-            console.log('최근 업데이트: 3장 리딩 결과 undefined 오류 수정');
+            console.log('최근 업데이트: 3장 리딩 자연스러운 문장 생성 개선');
             
             // 생년월일 폼 초기화
             initializeBirthDateForm();
@@ -1340,15 +1340,111 @@
         // === 목적별 특화 해석 생성 함수들 ===
         function generateLoveInsights(cardReadings) {
             const reversedCount = cardReadings.filter(card => card.isReversed).length;
-            const keywords = cardReadings.map(card => card.keywords).join(', ');
+            const cardMeanings = cardReadings.map(card => card.meaning);
+            
+            // 연애 관련 요소 분석
+            const loveThemes = analyzeLoveThemes(cardMeanings);
+            const relationshipDynamics = analyzeRelationshipDynamics(cardMeanings);
             
             if (reversedCount >= 2) {
-                return `현재 연애 상황에서 어려움이 있을 수 있습니다. ${keywords}의 에너지를 통해 관계의 문제점을 파악하고 개선해나가세요.`;
+                const challenges = analyzeLoveChallenges(cardMeanings);
+                return `현재 연애 상황에서 ${challenges}이 있을 수 있습니다. 하지만 ${loveThemes}의 관점에서 바라보면 ${relationshipDynamics}의 기회로 발전시킬 수 있습니다.`;
             } else if (reversedCount === 1) {
-                return `연애에서 일부 어려움이 있지만, 전반적으로는 긍정적인 흐름입니다. ${keywords}의 조화를 통해 관계를 발전시켜 나가세요.`;
+                const balanceNeeds = analyzeLoveBalance(cardMeanings);
+                return `연애에서 ${balanceNeeds}의 균형을 찾는 것이 중요합니다. ${loveThemes}의 에너지를 통해 ${relationshipDynamics}를 발전시켜 나가세요.`;
             } else {
-                return `연애에 매우 긍정적인 에너지가 흐르고 있습니다. ${keywords}의 조합이 사랑의 성장을 이끌어낼 것입니다.`;
+                const positiveAspects = analyzeLovePositives(cardMeanings);
+                return `연애에 ${positiveAspects}의 에너지가 가득합니다. ${loveThemes}의 조합이 ${relationshipDynamics}의 성장을 이끌어낼 것입니다.`;
             }
+        }
+        
+        // 연애 테마 분석
+        function analyzeLoveThemes(meanings) {
+            const themes = [];
+            
+            meanings.forEach(meaning => {
+                if (meaning.includes('사랑') || meaning.includes('연애')) {
+                    themes.push('진정한 사랑');
+                } else if (meaning.includes('관계') || meaning.includes('소통')) {
+                    themes.push('깊은 소통');
+                } else if (meaning.includes('신뢰') || meaning.includes('믿음')) {
+                    themes.push('상호 신뢰');
+                } else if (meaning.includes('성장') || meaning.includes('발전')) {
+                    themes.push('함께 성장');
+                }
+            });
+            
+            return themes.length > 0 ? themes[0] : '사랑의 성장';
+        }
+        
+        // 관계 역학 분석
+        function analyzeRelationshipDynamics(meanings) {
+            const dynamics = [];
+            
+            meanings.forEach(meaning => {
+                if (meaning.includes('소통') || meaning.includes('이해')) {
+                    dynamics.push('더 나은 소통');
+                } else if (meaning.includes('조화') || meaning.includes('균형')) {
+                    dynamics.push('관계의 조화');
+                } else if (meaning.includes('성장') || meaning.includes('발전')) {
+                    dynamics.push('함께하는 성장');
+                } else if (meaning.includes('신뢰') || meaning.includes('믿음')) {
+                    dynamics.push('깊어지는 신뢰');
+                }
+            });
+            
+            return dynamics.length > 0 ? dynamics[0] : '관계의 발전';
+        }
+        
+        // 연애 어려움 분석
+        function analyzeLoveChallenges(meanings) {
+            const challenges = [];
+            
+            meanings.forEach(meaning => {
+                if (meaning.includes('오해') || meaning.includes('갈등')) {
+                    challenges.push('소통의 어려움');
+                } else if (meaning.includes('불안') || meaning.includes('의심')) {
+                    challenges.push('신뢰의 문제');
+                } else if (meaning.includes('거리') || meaning.includes('소원')) {
+                    challenges.push('감정적 거리감');
+                }
+            });
+            
+            return challenges.length > 0 ? challenges[0] : '관계의 어려움';
+        }
+        
+        // 연애 균형 분석
+        function analyzeLoveBalance(meanings) {
+            const balances = [];
+            
+            meanings.forEach(meaning => {
+                if (meaning.includes('개인') || meaning.includes('관계')) {
+                    balances.push('개인과 관계');
+                } else if (meaning.includes('감정') || meaning.includes('이성')) {
+                    balances.push('감정과 이성');
+                } else if (meaning.includes('과거') || meaning.includes('미래')) {
+                    balances.push('과거와 미래');
+                }
+            });
+            
+            return balances.length > 0 ? balances[0] : '다양한 측면';
+        }
+        
+        // 연애 긍정 요소 분석
+        function analyzeLovePositives(meanings) {
+            const positives = [];
+            
+            meanings.forEach(meaning => {
+                if (meaning.includes('사랑') || meaning.includes('애정')) {
+                    positives.push('깊은 사랑');
+                } else if (meaning.includes('성장') || meaning.includes('발전')) {
+                    positives.push('함께 성장');
+                } else if (meaning.includes('조화') || meaning.includes('평온')) {
+                    positives.push('관계의 조화');
+                }
+            });
+            
+            return positives.length > 0 ? positives[0] : '사랑의 에너지';
         }
         
         function generateCareerGuidance(cardReadings) {
@@ -1365,16 +1461,145 @@
         }
         
         function generateDailyFocus(cardReadings) {
-            const keywords = cardReadings.map(card => card.keywords).join(', ');
             const reversedCount = cardReadings.filter(card => card.isReversed).length;
+            const cardMeanings = cardReadings.map(card => card.meaning);
+            
+            // 카드들의 의미를 분석하여 자연스러운 문장 생성
+            let focusMessage = '';
             
             if (reversedCount >= 2) {
-                return `오늘은 주의가 필요한 날입니다. ${keywords}의 에너지를 통해 어려움을 극복하고 성장의 기회로 삼으세요.`;
+                // 어려움이 있는 상황
+                const challenges = analyzeChallenges(cardMeanings);
+                const growthOpportunities = analyzeGrowthOpportunities(cardMeanings);
+                
+                focusMessage = `오늘은 ${challenges}에 주의해야 할 날입니다. 하지만 이는 ${growthOpportunities}의 기회이기도 합니다. 차분히 상황을 파악하고 신중하게 대응하세요.`;
             } else if (reversedCount === 1) {
-                return `오늘은 균형을 찾는 것이 중요한 날입니다. ${keywords}의 조화를 통해 하루를 의미 있게 보내세요.`;
+                // 균형이 필요한 상황
+                const balanceAspects = analyzeBalanceAspects(cardMeanings);
+                const positiveElements = analyzePositiveElements(cardMeanings);
+                
+                focusMessage = `오늘은 ${balanceAspects}의 균형을 찾는 것이 중요합니다. ${positiveElements}의 에너지를 활용하여 하루를 의미 있게 보내세요.`;
             } else {
-                return `오늘은 매우 긍정적인 에너지가 가득한 날입니다. ${keywords}의 조합을 통해 좋은 일들이 일어날 것입니다.`;
+                // 긍정적인 상황
+                const positiveThemes = analyzePositiveThemes(cardMeanings);
+                const opportunities = analyzeOpportunities(cardMeanings);
+                
+                focusMessage = `오늘은 ${positiveThemes}의 에너지가 가득한 날입니다. ${opportunities}의 기회를 놓치지 마시고 적극적으로 활용하세요.`;
             }
+            
+            return focusMessage;
+        }
+        
+        // 어려움 분석 함수
+        function analyzeChallenges(meanings) {
+            const challenges = [];
+            
+            meanings.forEach(meaning => {
+                if (meaning.includes('어려움') || meaning.includes('도전') || meaning.includes('갈등')) {
+                    challenges.push('현재 상황의 어려움');
+                } else if (meaning.includes('불안') || meaning.includes('우려')) {
+                    challenges.push('내면의 불안감');
+                } else if (meaning.includes('변화') || meaning.includes('전환')) {
+                    challenges.push('예상치 못한 변화');
+                }
+            });
+            
+            return challenges.length > 0 ? challenges[0] : '일시적인 어려움';
+        }
+        
+        // 성장 기회 분석 함수
+        function analyzeGrowthOpportunities(meanings) {
+            const opportunities = [];
+            
+            meanings.forEach(meaning => {
+                if (meaning.includes('학습') || meaning.includes('성장')) {
+                    opportunities.push('개인적 성장');
+                } else if (meaning.includes('인내') || meaning.includes('지혜')) {
+                    opportunities.push('내면의 성숙');
+                } else if (meaning.includes('변화') || meaning.includes('새로운')) {
+                    opportunities.push('새로운 가능성');
+                }
+            });
+            
+            return opportunities.length > 0 ? opportunities[0] : '개인적 발전';
+        }
+        
+        // 균형 요소 분석 함수
+        function analyzeBalanceAspects(meanings) {
+            const aspects = [];
+            
+            meanings.forEach(meaning => {
+                if (meaning.includes('감정') || meaning.includes('직관')) {
+                    aspects.push('감정과 이성');
+                } else if (meaning.includes('과거') || meaning.includes('미래')) {
+                    aspects.push('과거와 미래');
+                } else if (meaning.includes('개인') || meaning.includes('관계')) {
+                    aspects.push('개인과 관계');
+                } else if (meaning.includes('물질') || meaning.includes('정신')) {
+                    aspects.push('물질과 정신');
+                }
+            });
+            
+            return aspects.length > 0 ? aspects[0] : '다양한 측면';
+        }
+        
+        // 긍정적 요소 분석 함수
+        function analyzePositiveElements(meanings) {
+            const elements = [];
+            
+            meanings.forEach(meaning => {
+                if (meaning.includes('창의') || meaning.includes('혁신')) {
+                    elements.push('창의적 사고');
+                } else if (meaning.includes('협력') || meaning.includes('조화')) {
+                    elements.push('협력과 조화');
+                } else if (meaning.includes('성장') || meaning.includes('발전')) {
+                    elements.push('지속적 성장');
+                } else if (meaning.includes('안정') || meaning.includes('평온')) {
+                    elements.push('내면의 평온');
+                }
+            });
+            
+            return elements.length > 0 ? elements[0] : '긍정적 에너지';
+        }
+        
+        // 긍정적 테마 분석 함수
+        function analyzePositiveThemes(meanings) {
+            const themes = [];
+            
+            meanings.forEach(meaning => {
+                if (meaning.includes('성공') || meaning.includes('성취')) {
+                    themes.push('성공과 성취');
+                } else if (meaning.includes('사랑') || meaning.includes('관계')) {
+                    themes.push('사랑과 관계');
+                } else if (meaning.includes('창의') || meaning.includes('혁신')) {
+                    themes.push('창의와 혁신');
+                } else if (meaning.includes('지혜') || meaning.includes('통찰')) {
+                    themes.push('지혜와 통찰');
+                } else if (meaning.includes('안정') || meaning.includes('평온')) {
+                    themes.push('안정과 평온');
+                }
+            });
+            
+            return themes.length > 0 ? themes[0] : '긍정과 희망';
+        }
+        
+        // 기회 분석 함수
+        function analyzeOpportunities(meanings) {
+            const opportunities = [];
+            
+            meanings.forEach(meaning => {
+                if (meaning.includes('새로운') || meaning.includes('시작')) {
+                    opportunities.push('새로운 시작');
+                } else if (meaning.includes('발전') || meaning.includes('성장')) {
+                    opportunities.push('개인적 발전');
+                } else if (meaning.includes('협력') || meaning.includes('소통')) {
+                    opportunities.push('협력과 소통');
+                } else if (meaning.includes('창의') || meaning.includes('표현')) {
+                    opportunities.push('창의적 표현');
+                }
+            });
+            
+            return opportunities.length > 0 ? opportunities[0] : '좋은 기회';
         }
         
         function generateHealthNotes(cardReadings) {
@@ -1545,7 +1770,7 @@
                 try {
                     const { data, error } = await supabase
                         .from('tarot_purpose_readings')
-                        .select('*')
+                        .select('upright_meaning, reversed_meaning, keywords, advice')
                         .eq('card_id', cardWithGroup.id)
                         .eq('purpose_type', selectedPurpose)
                         .single();
