@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>타로 리딩 시스템 v0.1.4</title>
+    <title>타로 리딩 시스템 v0.1.5</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/tarot.css">
 </head>
@@ -11,7 +11,7 @@
     <div id="app">
         <header class="header">
             <div class="container">
-                <h1>🔮 타로 리딩 시스템 <span class="version">v0.1.4</span></h1>
+                <h1>🔮 타로 리딩 시스템 <span class="version">v0.1.5</span></h1>
                 <p>당신의 운명을 읽어드립니다</p>
             </div>
         </header>
@@ -401,7 +401,7 @@
         import { NumerologyService } from './js/services/numerologyService.js';
         
         // === 버전 정보 ===
-        const APP_VERSION = '0.1.4';
+        const APP_VERSION = '0.1.5';
         
         // === 전역 변수들 ===
         let currentStep = 'birthDateInput';
@@ -705,7 +705,7 @@
         document.addEventListener('DOMContentLoaded', async function() {
             console.log('=== 애플리케이션 시작 ===');
             console.log('버전:', APP_VERSION);
-            console.log('최근 업데이트: 3장 리딩 카드별 고유 의미 생성');
+            console.log('최근 업데이트: 계절 컨텍스트를 전체 조합 해석으로 이동');
             
             // 생년월일 폼 초기화
             initializeBirthDateForm();
@@ -1111,8 +1111,8 @@
                     console.log(`카드 ${index + 1} (${reading.position}): ${reading.name} - ${reading.meaning.substring(0, 50)}...`);
                 });
                 
-                // 조합 해석 동적 생성 (tarot_purpose_readings 기반)
-                let combinationReading = generateCombinationReading(cardReadings, selectedPurpose);
+                // 조합 해석 동적 생성 (tarot_purpose_readings 기반, 계절 정보 포함)
+                let combinationReading = generateCombinationReading(cardReadings, selectedPurpose, birthSeason);
                 console.log('동적 조합 해석 생성 완료:', combinationReading);
                 
                 // 수치학적 조합 해석 적용
@@ -1297,7 +1297,7 @@
         // generateNumerologicalAdvice 함수는 제거됨 - 데이터베이스에서 조언을 가져옴
 
         // === 조합 해석 동적 생성 함수 ===
-        function generateCombinationReading(cardReadings, purpose) {
+        function generateCombinationReading(cardReadings, purpose, birthSeason = null) {
             const positions = ['과거', '현재', '미래'];
             
             console.log('generateCombinationReading 호출됨:');
@@ -1310,7 +1310,7 @@
                 past_meaning: cardReadings[0].meaning,
                 present_meaning: cardReadings[1].meaning,
                 future_meaning: cardReadings[2].meaning,
-                overall_meaning: generateOverallMeaning(cardReadings, purpose),
+                overall_meaning: generateOverallMeaning(cardReadings, purpose, birthSeason),
                 advice: generateAdvice(cardReadings, purpose)
             };
             
@@ -1638,7 +1638,7 @@
         }
 
         // === 해석 생성 함수들 ===
-        function generateOverallMeaning(cardMeanings, purpose) {
+        function generateOverallMeaning(cardMeanings, purpose, birthSeason = null) {
             const purposeNames = {
                 'love': '사랑과 관계',
                 'career': '직장과 업무',
@@ -1651,7 +1651,24 @@
             const cardNames = cardMeanings.map(card => card.name);
             const keywords = cardMeanings.map(card => card.keywords).join(', ');
             
-            return `${purposeName} 측면에서 ${cardNames[0]}, ${cardNames[1]}, ${cardNames[2]}의 조합은 ${keywords}의 에너지를 나타냅니다. 과거의 경험이 현재의 선택에 영향을 미치고, 미래의 방향성을 제시하고 있습니다.`;
+            let overallMeaning = `${purposeName} 측면에서 ${cardNames[0]}, ${cardNames[1]}, ${cardNames[2]}의 조합은 ${keywords}의 에너지를 나타냅니다. 과거의 경험이 현재의 선택에 영향을 미치고, 미래의 방향성을 제시하고 있습니다.`;
+            
+            // 계절별 컨텍스트 추가 (전체 조합 해석에만)
+            if (birthSeason && birthSeason.name) {
+                const seasonContexts = {
+                    '봄': '봄의 새로운 시작과 성장의 에너지가 이 조합에 활력을 더하고 있습니다.',
+                    '여름': '여름의 활력과 열정이 넘치는 에너지가 이 조합에 힘을 실어주고 있습니다.',
+                    '가을': '가을의 수확과 성숙의 에너지가 이 조합에 깊이를 더하고 있습니다.',
+                    '겨울': '겨울의 내면의 성찰과 준비의 에너지가 이 조합에 지혜를 더하고 있습니다.'
+                };
+                
+                const seasonContext = seasonContexts[birthSeason.name] || '';
+                if (seasonContext) {
+                    overallMeaning += ` ${seasonContext}`;
+                }
+            }
+            
+            return overallMeaning;
         }
 
         function generateAdvice(cardMeanings, purpose) {
