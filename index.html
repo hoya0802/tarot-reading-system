@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>타로 리딩 시스템 v0.1.0</title>
+    <title>타로 리딩 시스템 v0.1.2</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/tarot.css">
 </head>
@@ -11,7 +11,7 @@
     <div id="app">
         <header class="header">
             <div class="container">
-                <h1>🔮 타로 리딩 시스템 <span class="version">v0.1.0</span></h1>
+                <h1>🔮 타로 리딩 시스템 <span class="version">v0.1.2</span></h1>
                 <p>당신의 운명을 읽어드립니다</p>
             </div>
         </header>
@@ -401,7 +401,7 @@
         import { NumerologyService } from './js/services/numerologyService.js';
         
         // === 버전 정보 ===
-        const APP_VERSION = '0.1.0';
+        const APP_VERSION = '0.1.2';
         
         // === 전역 변수들 ===
         let currentStep = 'birthDateInput';
@@ -705,7 +705,7 @@
         document.addEventListener('DOMContentLoaded', async function() {
             console.log('=== 애플리케이션 시작 ===');
             console.log('버전:', APP_VERSION);
-            console.log('최근 업데이트: 3장 리딩 카드별 고유 의미 개인화 수정');
+            console.log('최근 업데이트: 1장 리딩 데이터베이스 조언 출력 복원');
             
             // 생년월일 폼 초기화
             initializeBirthDateForm();
@@ -1814,7 +1814,8 @@
                     if (numerologicalInsight) {
                         // 안전 병합: 누락 시 원래 값 유지
                         personalizedMeaning = numerologicalInsight.meaning || personalizedMeaning;
-                        personalizedAdvice = numerologicalInsight.advice || personalizedAdvice;
+                        // 조언은 데이터베이스 원본 유지 (수치학적 조언으로 덮어쓰지 않음)
+                        // personalizedAdvice = numerologicalInsight.advice || personalizedAdvice;
                     }
                 }
                 
