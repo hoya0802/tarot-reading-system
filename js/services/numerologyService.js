@@ -297,10 +297,7 @@ export class NumerologyService {
             }
         }
         
-        // 계절별 컨텍스트 추가
-        if (seasonInsight?.insight_text) {
-            baseMeaning += ` ${seasonInsight.insight_text}`;
-        }
+        // 계절별 컨텍스트는 전체 조합 해석에서만 추가 (개별 카드에서는 제거)
         
         return baseMeaning;
     }
