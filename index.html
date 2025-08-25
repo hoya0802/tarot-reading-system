@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>타로 리딩 시스템 v0.2.0</title>
+    <title>타로 리딩 시스템 v0.2.1</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/tarot.css">
 </head>
@@ -11,7 +11,7 @@
     <div id="app">
         <header class="header">
             <div class="container">
-                <h1>🔮 타로 리딩 시스템 <span class="version">v0.2.0</span></h1>
+                <h1>🔮 타로 리딩 시스템 <span class="version">v0.2.1</span></h1>
                 <p>당신의 운명을 읽어드립니다</p>
             </div>
         </header>
@@ -374,11 +374,6 @@
                     </div>
 
                     <div class="result-content">
-                        <div class="result-summary">
-                            <h3>🔮 전체적인 해석</h3>
-                            <p id="overallMeaning">리딩 결과가 여기에 표시됩니다.</p>
-                        </div>
-
                         <div class="result-advice">
                             <h3>📊 오늘의 긍정수치</h3>
                             <div class="positivity-score">
@@ -391,10 +386,15 @@
                         </div>
 
                         <div class="result-cards">
-                            <h3>📋 선택된 카드들</h3>
+                            <h3>📋 카드별 상세 해석</h3>
                             <div id="resultCardsList" class="cards-grid">
                                 <!-- 선택된 카드들의 상세 정보가 여기에 표시됩니다 -->
                             </div>
+                        </div>
+
+                        <div class="result-summary">
+                            <h3>🌟 전체적인 해석</h3>
+                            <p id="overallMeaning">리딩 결과가 여기에 표시됩니다.</p>
                         </div>
 
                         <div class="text-center mt-4">
@@ -717,7 +717,7 @@
         document.addEventListener('DOMContentLoaded', async function() {
             console.log('=== 애플리케이션 시작 ===');
             console.log('버전:', APP_VERSION);
-            console.log('최근 업데이트: 3장 리딩 긍정수치 계산 방식 개선 - 카드별 본질적 에너지 및 에너지 균형 분석');
+            console.log('최근 업데이트: 3장 리딩 UI 개선 - 중복 해석 제거 및 카드별 상세 해석 레이아웃 개선');
             
             // 생년월일 폼 초기화
             initializeBirthDateForm();
@@ -1224,21 +1224,9 @@
                 `;
             }
             
-            // 해석 결과 표시
+            // 전체적인 해석 표시 (과거/현재/미래 중복 제거)
             document.getElementById('overallMeaning').innerHTML = `
                 <div class="reading-sections">
-                    <div class="reading-section">
-                        <h4>📖 과거</h4>
-                        <p>${readingData.combination.past_meaning}</p>
-                    </div>
-                    <div class="reading-section">
-                        <h4>🎯 현재</h4>
-                        <p>${readingData.combination.present_meaning}</p>
-                    </div>
-                    <div class="reading-section">
-                        <h4>🔮 미래</h4>
-                        <p>${readingData.combination.future_meaning}</p>
-                    </div>
                     <div class="reading-section full-width">
                         <h4>🌟 전체적인 해석</h4>
                         <p>${readingData.combination.overall_meaning}</p>
@@ -1273,7 +1261,7 @@
                 positivityElement.setAttribute('data-score', 'low');
             }
             
-            // 카드 상세 정보 표시
+            // 카드별 상세 해석 표시 (개선된 레이아웃)
             const cardsList = document.getElementById('resultCardsList');
             cardsList.innerHTML = '';
             
@@ -1281,11 +1269,22 @@
                 const cardDiv = document.createElement('div');
                 cardDiv.className = 'card-detail';
                 cardDiv.innerHTML = `
-                    <h4>${cardReading.position}: ${cardReading.name}</h4>
-                    <p class="card-direction">${cardReading.isReversed ? '역방향' : '정방향'}</p>
-                    <p class="card-meaning">${cardReading.meaning}</p>
-                    <p class="card-keywords">키워드: ${cardReading.keywords}</p>
-                    <p class="card-advice">조언: ${cardReading.advice}</p>
+                    <div class="card-header">
+                        <h4>${cardReading.position}: ${cardReading.name}</h4>
+                        <span class="card-direction-badge ${cardReading.isReversed ? 'reversed' : 'upright'}">
+                            ${cardReading.isReversed ? '역방향' : '정방향'}
+                        </span>
+                    </div>
+                    <div class="card-content">
+                        <div class="card-meaning-section">
+                            <h5>📖 해석</h5>
+                            <p class="card-meaning">${cardReading.meaning}</p>
+                        </div>
+                        <div class="card-keywords-section">
+                            <h5>🔑 키워드</h5>
+                            <p class="card-keywords">${cardReading.keywords}</p>
+                        </div>
+                    </div>
                 `;
                 cardsList.appendChild(cardDiv);
             });
