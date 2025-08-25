@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>타로 리딩 시스템 v0.2.1</title>
+    <title>타로 리딩 시스템 v0.2.3</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/tarot.css">
 </head>
@@ -11,7 +11,7 @@
     <div id="app">
         <header class="header">
             <div class="container">
-                <h1>🔮 타로 리딩 시스템 <span class="version">v0.2.1</span></h1>
+                <h1>🔮 타로 리딩 시스템 <span class="version">v0.2.3</span></h1>
                 <p>당신의 운명을 읽어드립니다</p>
             </div>
         </header>
@@ -717,7 +717,7 @@
         document.addEventListener('DOMContentLoaded', async function() {
             console.log('=== 애플리케이션 시작 ===');
             console.log('버전:', APP_VERSION);
-            console.log('최근 업데이트: 3장 리딩 UI 개선 - 중복 해석 제거 및 카드별 상세 해석 레이아웃 개선');
+            console.log('최근 업데이트: 카드 조합 상호작용 분석 - 과거→현재→미래 흐름 및 카드 간 관계 분석 추가');
             
             // 생년월일 폼 초기화
             initializeBirthDateForm();
@@ -1231,6 +1231,36 @@
                         <h4>🌟 전체적인 해석</h4>
                         <p>${readingData.combination.overall_meaning}</p>
                     </div>
+                    
+                    <!-- 카드 조합 분석 정보 추가 -->
+                    ${readingData.combination.energyFlow ? `
+                        <div class="reading-section full-width combination-analysis">
+                            <h4>🔄 에너지 흐름 분석</h4>
+                            <p>${readingData.combination.energyFlow.description}</p>
+                            <div class="energy-flow-details">
+                                <span class="energy-level">과거: ${readingData.combination.energyFlow.levels.past}%</span>
+                                <span class="energy-level">현재: ${readingData.combination.energyFlow.levels.present}%</span>
+                                <span class="energy-level">미래: ${readingData.combination.energyFlow.levels.future}%</span>
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    ${readingData.combination.cardRelationships ? `
+                        <div class="reading-section full-width card-relationships">
+                            <h4>🔗 카드 간 관계</h4>
+                            ${readingData.combination.cardRelationships.slice(0, 2).map(relation => `
+                                <p>${relation.description}</p>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                    
+                    ${readingData.combination.purposeFlow ? `
+                        <div class="reading-section full-width purpose-flow">
+                            <h4>🎯 ${getPurposeSpecificTitle(selectedPurpose)}</h4>
+                            <p>${readingData.combination.purposeFlow.description}</p>
+                        </div>
+                    ` : ''}
+                    
                     ${readingData.specialInsight ? `
                         <div class="reading-section full-width purpose-specific">
                             <h4>${getPurposeSpecificTitle(selectedPurpose)}</h4>
@@ -1338,6 +1368,11 @@
             // 긍정수치 계산
             const positivityData = calculatePositivityScore(cardReadings);
             
+            // 카드 조합 상호작용 분석
+            const combinationAnalysis = numerologyService.analyzeCardCombination(
+                readingData.cards, purpose
+            );
+            
             // 기본 조합 해석 생성
             const combinationReading = {
                 past_meaning: cardReadings[0].meaning,
@@ -1345,7 +1380,11 @@
                 future_meaning: cardReadings[2].meaning,
                 overall_meaning: generateOverallMeaning(cardReadings, purpose, birthSeason),
                 positivityScore: positivityData.score,
-                positivityDescription: positivityData.description
+                positivityDescription: positivityData.description,
+                // 카드 조합 분석 결과 추가
+                energyFlow: combinationAnalysis.energyFlow,
+                cardRelationships: combinationAnalysis.relationships,
+                purposeFlow: combinationAnalysis.purposeFlow
             };
             
             // 목적별 특화 정보 동적 생성
