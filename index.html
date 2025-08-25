@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>타로 리딩 시스템 v0.2.4</title>
+    <title>타로 리딩 시스템 v0.2.6</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/tarot.css">
 </head>
@@ -11,7 +11,7 @@
     <div id="app">
         <header class="header">
             <div class="container">
-                <h1>🔮 타로 리딩 시스템 <span class="version">v0.2.4</span></h1>
+                <h1>🔮 타로 리딩 시스템 <span class="version">v0.2.6</span></h1>
                 <p>당신의 운명을 읽어드립니다</p>
             </div>
         </header>
@@ -717,7 +717,7 @@
         document.addEventListener('DOMContentLoaded', async function() {
             console.log('=== 애플리케이션 시작 ===');
             console.log('버전:', APP_VERSION);
-            console.log('최근 업데이트: 카드 조합 상호작용 분석 버그 수정 - readingData 참조 오류 해결');
+            console.log('최근 업데이트: 결과 화면 데이터 처리 개선 - 중복 특화 정보 표시 문제 해결');
             
             // 생년월일 폼 초기화
             initializeBirthDateForm();
@@ -1124,7 +1124,7 @@
                 });
                 
                 // 조합 해석 동적 생성 (tarot_purpose_readings 기반, 계절 정보 포함)
-                let combinationReading = generateCombinationReading(cardReadings, selectedPurpose, birthSeason);
+                let combinationReading = generateCombinationReading(cardReadings, selectedPurpose, birthSeason, cardsWithGroups);
                 console.log('동적 조합 해석 생성 완료:', combinationReading);
                 
                 // 수치학적 조합 해석 적용
@@ -1178,7 +1178,12 @@
 
         // === 목적별 특화 정보 추출 ===
         function getSpecialInsight(combinationData, purposeType) {
-            // 동적으로 생성된 특화 정보 반환
+            // 새로운 카드 조합 분석이 있으면 우선 사용
+            if (combinationData.purposeFlow) {
+                return combinationData.purposeFlow.description;
+            }
+            
+            // 기존 동적으로 생성된 특화 정보 반환
             switch (purposeType) {
                 case 'love':
                     return combinationData.love_insights;
@@ -1261,7 +1266,7 @@
                         </div>
                     ` : ''}
                     
-                    ${readingData.specialInsight ? `
+                    ${readingData.specialInsight && !readingData.combination.purposeFlow ? `
                         <div class="reading-section full-width purpose-specific">
                             <h4>${getPurposeSpecificTitle(selectedPurpose)}</h4>
                             <p>${readingData.specialInsight}</p>
@@ -1357,7 +1362,7 @@
         // generateNumerologicalAdvice 함수는 제거됨 - 데이터베이스에서 조언을 가져옴
 
         // === 조합 해석 동적 생성 함수 ===
-        function generateCombinationReading(cardReadings, purpose, birthSeason = null) {
+        function generateCombinationReading(cardReadings, purpose, birthSeason = null, cardsWithGroups = null) {
             const positions = ['과거', '현재', '미래'];
             
             console.log('generateCombinationReading 호출됨:');
@@ -1368,10 +1373,13 @@
             // 긍정수치 계산
             const positivityData = calculatePositivityScore(cardReadings);
             
-            // 카드 조합 상호작용 분석
-            const combinationAnalysis = numerologyService.analyzeCardCombination(
-                cardsWithGroups, purpose
-            );
+            // 카드 조합 상호작용 분석 (cardsWithGroups가 있을 때만)
+            let combinationAnalysis = null;
+            if (cardsWithGroups) {
+                combinationAnalysis = numerologyService.analyzeCardCombination(
+                    cardsWithGroups, purpose
+                );
+            }
             
             // 기본 조합 해석 생성
             const combinationReading = {
@@ -1380,16 +1388,21 @@
                 future_meaning: cardReadings[2].meaning,
                 overall_meaning: generateOverallMeaning(cardReadings, purpose, birthSeason),
                 positivityScore: positivityData.score,
-                positivityDescription: positivityData.description,
-                // 카드 조합 분석 결과 추가
-                energyFlow: combinationAnalysis.energyFlow,
-                cardRelationships: combinationAnalysis.relationships,
-                purposeFlow: combinationAnalysis.purposeFlow
+                positivityDescription: positivityData.description
             };
             
-            // 목적별 특화 정보 동적 생성
-            const specialInsights = generateSpecialInsights(cardReadings, purpose);
-            Object.assign(combinationReading, specialInsights);
+            // 카드 조합 분석 결과가 있으면 추가
+            if (combinationAnalysis) {
+                combinationReading.energyFlow = combinationAnalysis.energyFlow;
+                combinationReading.cardRelationships = combinationAnalysis.relationships;
+                combinationReading.purposeFlow = combinationAnalysis.purposeFlow;
+            }
+            
+            // 카드 조합 분석이 없을 때만 기존 특화 정보 생성
+            if (!combinationAnalysis) {
+                const specialInsights = generateSpecialInsights(cardReadings, purpose);
+                Object.assign(combinationReading, specialInsights);
+            }
             
             return combinationReading;
         }
