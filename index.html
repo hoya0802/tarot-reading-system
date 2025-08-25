@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>타로 리딩 시스템 v0.1.8</title>
+    <title>타로 리딩 시스템 v0.2.0</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/tarot.css">
 </head>
@@ -11,7 +11,7 @@
     <div id="app">
         <header class="header">
             <div class="container">
-                <h1>🔮 타로 리딩 시스템 <span class="version">v0.1.8</span></h1>
+                <h1>🔮 타로 리딩 시스템 <span class="version">v0.2.0</span></h1>
                 <p>당신의 운명을 읽어드립니다</p>
             </div>
         </header>
@@ -717,7 +717,7 @@
         document.addEventListener('DOMContentLoaded', async function() {
             console.log('=== 애플리케이션 시작 ===');
             console.log('버전:', APP_VERSION);
-            console.log('최근 업데이트: 1장/3장 리딩 모두 긍정수치 시스템 적용 - 객관적 점수 표시');
+            console.log('최근 업데이트: 3장 리딩 긍정수치 계산 방식 개선 - 카드별 본질적 에너지 및 에너지 균형 분석');
             
             // 생년월일 폼 초기화
             initializeBirthDateForm();
@@ -1708,26 +1708,29 @@
 
         function calculatePositivityScore(cardReadings) {
             const totalCards = cardReadings.length;
-            const uprightCards = cardReadings.filter(card => !card.isReversed).length;
-            const reversedCards = cardReadings.filter(card => card.isReversed).length;
             
-            // 기본 긍정수치 계산 (정방향 카드 비율)
-            let baseScore = Math.round((uprightCards / totalCards) * 100);
+            // 1장 리딩인 경우와 3장 리딩인 경우를 구분
+            if (totalCards === 1) {
+                return calculateSingleCardPositivity(cardReadings[0]);
+            } else {
+                return calculateMultiCardPositivity(cardReadings);
+            }
+        }
+        
+        // 1장 리딩용 긍정수치 계산
+        function calculateSingleCardPositivity(card) {
+            // 카드별 본질적 긍정 에너지 점수 (0-100)
+            const cardBaseScore = getCardBasePositivity(card.name);
             
-            // 카드별 가중치 적용 (메이저 아르카나는 더 큰 영향)
-            let weightedScore = 0;
-            cardReadings.forEach(card => {
-                const cardWeight = card.major_minor === 'major' ? 1.2 : 1.0;
-                const cardScore = card.isReversed ? 0 : 100;
-                weightedScore += (cardScore * cardWeight);
-            });
+            // 방향에 따른 점수 조정
+            let finalScore = card.isReversed ? (100 - cardBaseScore) : cardBaseScore;
             
-            // 가중 평균 계산
-            const totalWeight = cardReadings.reduce((sum, card) => {
-                return sum + (card.major_minor === 'major' ? 1.2 : 1.0);
-            }, 0);
+            // 메이저 아르카나는 더 큰 영향력 (가중치 1.2배)
+            if (card.major_minor === 'major') {
+                finalScore = Math.min(100, finalScore * 1.2);
+            }
             
-            const finalScore = Math.round(weightedScore / totalWeight);
+            finalScore = Math.round(finalScore);
             
             // 점수 범위별 설명 생성
             let description = '';
@@ -1747,12 +1750,170 @@
                 score: finalScore,
                 description: description,
                 details: {
-                    totalCards: totalCards,
-                    uprightCards: uprightCards,
-                    reversedCards: reversedCards,
-                    baseScore: baseScore
+                    cardName: card.name,
+                    baseScore: cardBaseScore,
+                    isReversed: card.isReversed,
+                    majorMinor: card.major_minor
                 }
             };
+        }
+        
+        // 3장 리딩용 긍정수치 계산 (개선된 방식)
+        function calculateMultiCardPositivity(cardReadings) {
+            // 각 카드의 개별 긍정수치 계산
+            const cardScores = cardReadings.map(card => {
+                const baseScore = getCardBasePositivity(card.name);
+                let individualScore = card.isReversed ? (100 - baseScore) : baseScore;
+                
+                // 메이저 아르카나 가중치 적용
+                if (card.major_minor === 'major') {
+                    individualScore = Math.min(100, individualScore * 1.2);
+                }
+                
+                return {
+                    cardName: card.name,
+                    baseScore: baseScore,
+                    individualScore: Math.round(individualScore),
+                    isReversed: card.isReversed,
+                    majorMinor: card.major_minor,
+                    weight: card.major_minor === 'major' ? 1.2 : 1.0
+                };
+            });
+            
+            // 가중 평균으로 최종 점수 계산
+            let totalWeightedScore = 0;
+            let totalWeight = 0;
+            
+            cardScores.forEach(cardScore => {
+                totalWeightedScore += cardScore.individualScore * cardScore.weight;
+                totalWeight += cardScore.weight;
+            });
+            
+            const finalScore = Math.round(totalWeightedScore / totalWeight);
+            
+            // 카드 조합의 에너지 균형 분석
+            const energyBalance = analyzeEnergyBalance(cardScores);
+            
+            // 점수 범위별 설명 생성 (에너지 균형 고려)
+            let description = generateMultiCardDescription(finalScore, energyBalance);
+            
+            return {
+                score: finalScore,
+                description: description,
+                details: {
+                    totalCards: cardReadings.length,
+                    cardScores: cardScores,
+                    energyBalance: energyBalance,
+                    averageScore: Math.round(cardScores.reduce((sum, card) => sum + card.individualScore, 0) / cardScores.length)
+                }
+            };
+        }
+        
+        // 3장 카드 조합의 에너지 균형 분석
+        function analyzeEnergyBalance(cardScores) {
+            const scores = cardScores.map(card => card.individualScore);
+            const avgScore = scores.reduce((sum, score) => sum + score, 0) / scores.length;
+            
+            // 점수 분산 계산
+            const variance = scores.reduce((sum, score) => sum + Math.pow(score - avgScore, 2), 0) / scores.length;
+            const standardDeviation = Math.sqrt(variance);
+            
+            // 균형 상태 판단
+            if (standardDeviation < 15) {
+                return 'balanced'; // 균형잡힌 조합
+            } else if (standardDeviation < 30) {
+                return 'moderate'; // 보통의 균형
+            } else {
+                return 'unbalanced'; // 균형이 깨진 조합
+            }
+        }
+        
+        // 3장 리딩용 설명 생성 (에너지 균형 고려)
+        function generateMultiCardDescription(finalScore, energyBalance) {
+            let baseDescription = '';
+            
+            if (finalScore >= 80) {
+                baseDescription = '매우 긍정적인 에너지가 가득한 날입니다. 자신감을 가지고 적극적으로 행동하세요.';
+            } else if (finalScore >= 60) {
+                baseDescription = '전반적으로 긍정적인 상황입니다. 기회를 놓치지 말고 활용하세요.';
+            } else if (finalScore >= 40) {
+                baseDescription = '균형 잡힌 에너지입니다. 신중하게 판단하고 행동하세요.';
+            } else if (finalScore >= 20) {
+                baseDescription = '도전적인 상황이 있을 수 있습니다. 인내심을 가지고 대응하세요.';
+            } else {
+                baseDescription = '어려운 시기를 겪고 있을 수 있습니다. 차분히 상황을 관찰하고 신중하게 판단하세요.';
+            }
+            
+            // 에너지 균형에 따른 추가 설명
+            let balanceDescription = '';
+            switch (energyBalance) {
+                case 'balanced':
+                    balanceDescription = ' 카드들의 에너지가 조화롭게 균형을 이루고 있어 안정적인 상황입니다.';
+                    break;
+                case 'moderate':
+                    balanceDescription = ' 카드들 간에 약간의 에너지 차이가 있지만 전반적으로 조화를 이룹니다.';
+                    break;
+                case 'unbalanced':
+                    balanceDescription = ' 카드들 간에 큰 에너지 차이가 있어 변화와 도전이 예상됩니다.';
+                    break;
+            }
+            
+            return baseDescription + balanceDescription;
+        }
+        
+        // 카드별 본질적 긍정 에너지 점수 반환
+        function getCardBasePositivity(cardName) {
+            const positivityScores = {
+                // 메이저 아르카나 (0-100)
+                'The Fool': 85,
+                'The Magician': 90,
+                'The High Priestess': 75,
+                'The Empress': 95,
+                'The Emperor': 80,
+                'The Hierophant': 70,
+                'The Lovers': 90,
+                'The Chariot': 85,
+                'Strength': 90,
+                'The Hermit': 60,
+                'Wheel of Fortune': 75,
+                'Justice': 80,
+                'The Hanged Man': 40,
+                'Death': 30,
+                'Temperance': 85,
+                'The Devil': 20,
+                'The Tower': 25,
+                'The Star': 95,
+                'The Moon': 45,
+                'The Sun': 100,
+                'Judgement': 80,
+                'The World': 95,
+                
+                // 마이너 아르카나 - Wands (0-100)
+                'Ace of Wands': 95, 'Two of Wands': 80, 'Three of Wands': 85, 'Four of Wands': 90,
+                'Five of Wands': 45, 'Six of Wands': 90, 'Seven of Wands': 70, 'Eight of Wands': 85,
+                'Nine of Wands': 60, 'Ten of Wands': 30, 'Page of Wands': 85, 'Knight of Wands': 80,
+                'Queen of Wands': 90, 'King of Wands': 85,
+                
+                // 마이너 아르카나 - Cups (0-100)
+                'Ace of Cups': 95, 'Two of Cups': 90, 'Three of Cups': 95, 'Four of Cups': 50,
+                'Five of Cups': 35, 'Six of Cups': 85, 'Seven of Cups': 60, 'Eight of Cups': 40,
+                'Nine of Cups': 95, 'Ten of Cups': 100, 'Page of Cups': 80, 'Knight of Cups': 85,
+                'Queen of Cups': 90, 'King of Cups': 85,
+                
+                // 마이너 아르카나 - Swords (0-100)
+                'Ace of Swords': 90, 'Two of Swords': 55, 'Three of Swords': 25, 'Four of Swords': 70,
+                'Five of Swords': 30, 'Six of Swords': 75, 'Seven of Swords': 40, 'Eight of Swords': 35,
+                'Nine of Swords': 20, 'Ten of Swords': 15, 'Page of Swords': 75, 'Knight of Swords': 70,
+                'Queen of Swords': 80, 'King of Swords': 85,
+                
+                // 마이너 아르카나 - Pentacles (0-100)
+                'Ace of Pentacles': 90, 'Two of Pentacles': 75, 'Three of Pentacles': 85, 'Four of Pentacles': 60,
+                'Five of Pentacles': 25, 'Six of Pentacles': 85, 'Seven of Pentacles': 70, 'Eight of Pentacles': 80,
+                'Nine of Pentacles': 90, 'Ten of Pentacles': 95, 'Page of Pentacles': 80, 'Knight of Pentacles': 75,
+                'Queen of Pentacles': 90, 'King of Pentacles': 85
+            };
+            
+            return positivityScores[cardName] || 50; // 기본값 50
         }
 
         // === 네비게이션 함수들 ===
