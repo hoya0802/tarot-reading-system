@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>타로 리딩 시스템 v0.1.5</title>
+    <title>타로 리딩 시스템 v0.1.8</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/tarot.css">
 </head>
@@ -11,7 +11,7 @@
     <div id="app">
         <header class="header">
             <div class="container">
-                <h1>🔮 타로 리딩 시스템 <span class="version">v0.1.5</span></h1>
+                <h1>🔮 타로 리딩 시스템 <span class="version">v0.1.8</span></h1>
                 <p>당신의 운명을 읽어드립니다</p>
             </div>
         </header>
@@ -337,10 +337,16 @@
                             </div>
                         </div>
 
-                        <!-- 조언 -->
+                        <!-- 긍정수치 -->
                         <div class="single-result-advice">
-                            <h3>💡 오늘의 조언</h3>
-                            <p id="singleAdvice" class="advice-text">조언이 여기에 표시됩니다.</p>
+                            <h3>📊 오늘의 긍정수치</h3>
+                            <div class="positivity-score">
+                                <div class="score-circle">
+                                    <span id="singlePositivityScore">0</span>
+                                    <span class="score-unit">%</span>
+                                </div>
+                                <p id="singlePositivityDescription">긍정수치가 계산됩니다.</p>
+                            </div>
                         </div>
 
                         <!-- 액션 버튼 -->
@@ -374,8 +380,14 @@
                         </div>
 
                         <div class="result-advice">
-                            <h3>💡 조언</h3>
-                            <p id="advice">조언이 여기에 표시됩니다.</p>
+                            <h3>📊 오늘의 긍정수치</h3>
+                            <div class="positivity-score">
+                                <div class="score-circle">
+                                    <span id="positivityScore">0</span>
+                                    <span class="score-unit">%</span>
+                                </div>
+                                <p id="positivityDescription">긍정수치가 계산됩니다.</p>
+                            </div>
                         </div>
 
                         <div class="result-cards">
@@ -705,7 +717,7 @@
         document.addEventListener('DOMContentLoaded', async function() {
             console.log('=== 애플리케이션 시작 ===');
             console.log('버전:', APP_VERSION);
-            console.log('최근 업데이트: 계절 컨텍스트를 전체 조합 해석으로 이동');
+            console.log('최근 업데이트: 1장/3장 리딩 모두 긍정수치 시스템 적용 - 객관적 점수 표시');
             
             // 생년월일 폼 초기화
             initializeBirthDateForm();
@@ -1240,7 +1252,26 @@
                 </div>
             `;
             
-            document.getElementById('advice').textContent = readingData.combination.advice;
+            // 긍정수치 표시
+            const score = readingData.combination.positivityScore;
+            document.getElementById('positivityScore').textContent = score;
+            document.getElementById('positivityDescription').textContent = readingData.combination.positivityDescription;
+            
+            // 긍정수치에 따른 CSS 클래스 적용
+            const positivityElement = document.querySelector('.positivity-score');
+            positivityElement.removeAttribute('data-score');
+            
+            if (score >= 80) {
+                positivityElement.setAttribute('data-score', 'high');
+            } else if (score >= 60) {
+                positivityElement.setAttribute('data-score', 'medium-high');
+            } else if (score >= 40) {
+                positivityElement.setAttribute('data-score', 'medium');
+            } else if (score >= 20) {
+                positivityElement.setAttribute('data-score', 'medium-low');
+            } else {
+                positivityElement.setAttribute('data-score', 'low');
+            }
             
             // 카드 상세 정보 표시
             const cardsList = document.getElementById('resultCardsList');
@@ -1305,13 +1336,17 @@
             console.log('현재 카드:', cardReadings[1].name, '의미:', cardReadings[1].meaning.substring(0, 30) + '...');
             console.log('미래 카드:', cardReadings[2].name, '의미:', cardReadings[2].meaning.substring(0, 30) + '...');
             
+            // 긍정수치 계산
+            const positivityData = calculatePositivityScore(cardReadings);
+            
             // 기본 조합 해석 생성
             const combinationReading = {
                 past_meaning: cardReadings[0].meaning,
                 present_meaning: cardReadings[1].meaning,
                 future_meaning: cardReadings[2].meaning,
                 overall_meaning: generateOverallMeaning(cardReadings, purpose, birthSeason),
-                advice: generateAdvice(cardReadings, purpose)
+                positivityScore: positivityData.score,
+                positivityDescription: positivityData.description
             };
             
             // 목적별 특화 정보 동적 생성
@@ -1671,17 +1706,53 @@
             return overallMeaning;
         }
 
-        function generateAdvice(cardMeanings, purpose) {
-            const reversedCards = cardMeanings.filter(card => card.isReversed);
-            const uprightCards = cardMeanings.filter(card => !card.isReversed);
+        function calculatePositivityScore(cardReadings) {
+            const totalCards = cardReadings.length;
+            const uprightCards = cardReadings.filter(card => !card.isReversed).length;
+            const reversedCards = cardReadings.filter(card => card.isReversed).length;
             
-            if (reversedCards.length > 1) {
-                return '역방향 카드가 많아 현재 어려운 시기를 겪고 있을 수 있습니다. 인내심을 가지고 상황을 관찰하세요.';
-            } else if (uprightCards.length > 1) {
-                return '정방향 카드가 많아 긍정적인 에너지가 흐르고 있습니다. 자신의 직감을 믿고 행동하세요.';
+            // 기본 긍정수치 계산 (정방향 카드 비율)
+            let baseScore = Math.round((uprightCards / totalCards) * 100);
+            
+            // 카드별 가중치 적용 (메이저 아르카나는 더 큰 영향)
+            let weightedScore = 0;
+            cardReadings.forEach(card => {
+                const cardWeight = card.major_minor === 'major' ? 1.2 : 1.0;
+                const cardScore = card.isReversed ? 0 : 100;
+                weightedScore += (cardScore * cardWeight);
+            });
+            
+            // 가중 평균 계산
+            const totalWeight = cardReadings.reduce((sum, card) => {
+                return sum + (card.major_minor === 'major' ? 1.2 : 1.0);
+            }, 0);
+            
+            const finalScore = Math.round(weightedScore / totalWeight);
+            
+            // 점수 범위별 설명 생성
+            let description = '';
+            if (finalScore >= 80) {
+                description = '매우 긍정적인 에너지가 가득한 날입니다. 자신감을 가지고 적극적으로 행동하세요.';
+            } else if (finalScore >= 60) {
+                description = '전반적으로 긍정적인 상황입니다. 기회를 놓치지 말고 활용하세요.';
+            } else if (finalScore >= 40) {
+                description = '균형 잡힌 에너지입니다. 신중하게 판단하고 행동하세요.';
+            } else if (finalScore >= 20) {
+                description = '도전적인 상황이 있을 수 있습니다. 인내심을 가지고 대응하세요.';
             } else {
-                return '균형 잡힌 카드 배치입니다. 현재 상황을 객관적으로 분석하고 신중하게 판단하세요.';
+                description = '어려운 시기를 겪고 있을 수 있습니다. 차분히 상황을 관찰하고 신중하게 판단하세요.';
             }
+            
+            return {
+                score: finalScore,
+                description: description,
+                details: {
+                    totalCards: totalCards,
+                    uprightCards: uprightCards,
+                    reversedCards: reversedCards,
+                    baseScore: baseScore
+                }
+            };
         }
 
         // === 네비게이션 함수들 ===
@@ -1836,6 +1907,14 @@
                     }
                 }
                 
+                // 긍정수치 계산 (1장 리딩용)
+                const singleCardReading = {
+                    ...cardWithGroup,
+                    meaning: personalizedMeaning,
+                    isReversed: cardWithGroup.reversed
+                };
+                const positivityData = calculatePositivityScore([singleCardReading]);
+                
                 // 한 장 리딩 특화 해석 생성
                 const singleReadingData = generateSingleReadingInsight(
                     { ...cardReading, upright_meaning: personalizedMeaning, advice: personalizedAdvice }, 
@@ -1850,6 +1929,8 @@
                     purpose: selectedPurpose,
                     cardReading: { ...cardReading, upright_meaning: personalizedMeaning, advice: personalizedAdvice },
                     singleInsight: singleReadingData,
+                    positivityScore: positivityData.score,
+                    positivityDescription: positivityData.description,
                     timestamp: new Date(),
                     numerologicalData: userBirthDate ? {
                         birthDate: userBirthDate,
@@ -2120,7 +2201,27 @@
             document.getElementById('singleCoreMeaning').textContent = meaning;
             document.getElementById('singleDetailedMeaning').textContent = meaning;
             document.getElementById('singleKeywords').textContent = cardReading.keywords;
-            document.getElementById('singleAdvice').textContent = cardReading.advice;
+            
+            // 긍정수치 표시
+            const score = readingData.positivityScore;
+            document.getElementById('singlePositivityScore').textContent = score;
+            document.getElementById('singlePositivityDescription').textContent = readingData.positivityDescription;
+            
+            // 긍정수치에 따른 CSS 클래스 적용
+            const singlePositivityElement = document.querySelector('.single-result-advice .positivity-score');
+            singlePositivityElement.removeAttribute('data-score');
+            
+            if (score >= 80) {
+                singlePositivityElement.setAttribute('data-score', 'high');
+            } else if (score >= 60) {
+                singlePositivityElement.setAttribute('data-score', 'medium-high');
+            } else if (score >= 40) {
+                singlePositivityElement.setAttribute('data-score', 'medium');
+            } else if (score >= 20) {
+                singlePositivityElement.setAttribute('data-score', 'medium-low');
+            } else {
+                singlePositivityElement.setAttribute('data-score', 'low');
+            }
             
             // 목적별 특화 정보
             document.getElementById('singleSpecialTitle').textContent = insight.title;
